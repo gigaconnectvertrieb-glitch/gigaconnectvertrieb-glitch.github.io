@@ -3,36 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gebietsmanager</title>
+  <title>E1 Außendienst</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/app.css?v=23" />
-  <link rel="stylesheet" href="css/mobile.css?v=23" />
+  <link rel="stylesheet" href="css/app.css?v=24" />
+  <link rel="stylesheet" href="css/mobile.css?v=24" />
 </head>
 <body>
   <div class="app">
-    <header class="top"><div class="brand"><div class="mark">E1</div><div><h1>Gebietsmanager</h1><p>Eigene Gebiets-App</p></div></div><div class="stats" id="stats"></div><span class="cloud" id="cloud">Lokal</span><div class="top-actions"><button class="btn" id="plan-btn" type="button">Gebiet planen</button><button class="btn" id="import-btn" type="button">Import</button><button class="btn primary" id="new-btn" type="button">PLZ suchen</button></div></header>
+    <header class="top"><div class="brand"><div class="mark">E1</div><div><h1>E1 Außendienst</h1><p>e1direktvertrieb.de · Strom und Gas</p></div></div><div class="stats" id="stats"></div><span class="cloud" id="cloud">Lokal</span><div class="top-actions"><button class="btn" id="plan-btn" type="button">Gebiet planen</button><button class="btn" id="import-btn" type="button">Import</button><button class="btn primary" id="new-btn" type="button">PLZ suchen</button></div></header>
     <aside class="side"><h2>PLZ</h2><form class="form plz-form" id="plz-form"><input name="plz" inputmode="numeric" maxlength="5" placeholder="PLZ, z. B. 63322" required /><select name="kind"><option value="efh">Einfamilie</option><option value="mfh">Mehrfamilie</option></select><button class="btn primary" type="submit">Geordnet suchen</button><p class="empty" id="plz-status">Nur PLZ und Typ.</p></form><h2>Gebiete</h2><input class="search" id="q" placeholder="Suche Name, PLZ" /><div id="list"></div></aside>
     <main class="map-wrap"><div id="map"></div><div class="crosshair" id="crosshair"></div><div class="plan-bar" id="plan-bar"><span id="plan-count">0 Punkte</span><button class="btn primary" id="plan-add" type="button">Punkt hier</button><button class="btn primary" id="plan-build" type="button">Gebiet auslesen</button><button class="btn" id="plan-undo" type="button">Zurück</button><button class="btn ghost" id="plan-clear" type="button">Leeren</button></div></main>
     <section class="detail"><div class="tabs"><button type="button" data-tab="doors">Gebäude</button><button type="button" data-tab="plan">Plan</button><button type="button" data-tab="week">Wochenliste</button></div><div class="detail-body" id="detail"></div></section>
   </div>
   <div class="modal" id="modal"><form class="dialog" id="dialog"></form></div>
   <input type="file" id="file" accept=".geojson,.json,.csv" hidden />
-  <script src="js/wipe-berlin.js?v=23"></script>
+  <script src="js/wipe-berlin.js?v=24"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>L.map = (function (orig) { return function () { const map = orig.apply(this, arguments); window.__gmMap = map; return map; }; })(L.map);</script>
-  <script src="js/login.js?v=23"></script>
-  <script src="js/no-demo.js?v=23"></script>
-  <script type="module" src="js/boot.js?v=23"></script>
-  <script type="module" src="js/app.js?v=23"></script>
-  <script type="module" src="js/snap.js?v=23"></script>
-  <script type="module" src="js/delete-area.js?v=23"></script>
-  <script type="module" src="js/route.js?v=23"></script>
-  <script type="module" src="js/google3d.js?v=23"></script>
-  <script src="js/map3d.js?v=23"></script>
-  <script src="js/field-run.js?v=23"></script>
-  <script src="js/points.js?v=23"></script>
-  <script src="js/classify.js?v=23"></script>
-  <script src="js/gemini-type.js?v=23"></script>
-  <script src="js/search-place.js?v=23"></script>
+  <script src="js/login.js?v=24"></script>
+  <script src="js/brand.js?v=24"></script>
+  <script src="js/no-demo.js?v=24"></script>
+  <script type="module" src="js/boot.js?v=24"></script>
+  <script type="module" src="js/app.js?v=24"></script>
+  <script type="module" src="js/snap.js?v=24"></script>
+  <script type="module" src="js/delete-area.js?v=24"></script>
+  <script type="module" src="js/route.js?v=24"></script>
+  <script type="module" src="js/google3d.js?v=24"></script>
+  <script src="js/map3d.js?v=24"></script>
+  <script src="js/field-run.js?v=24"></script>
+  <script src="js/points.js?v=24"></script>
+  <script src="js/classify.js?v=24"></script>
+  <script src="js/gemini-type.js?v=24"></script>
+  <script src="js/search-place.js?v=24"></script>
 </body>
 </html>
