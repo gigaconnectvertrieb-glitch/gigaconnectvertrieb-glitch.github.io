@@ -63,15 +63,13 @@
       <div class="detail-body" id="detail"></div>
     </section>
   </div>
-
-  <div class="modal" id="modal">
-    <form class="dialog" id="dialog"></form>
-  </div>
+  <div class="modal" id="modal"><form class="dialog" id="dialog"></form></div>
   <input type="file" id="file" accept=".geojson,.json,.csv,application/json,text/csv" hidden />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
   <script>L.map = (function (orig) { return function () { const map = orig.apply(this, arguments); window.__gmMap = map; return map; }; })(L.map);</script>
+  <script src="js/no-demo.js"></script>
   <script src="js/strip-team.js"></script>
   <script src="js/purge-demo.js"></script>
   <script type="module" src="js/boot.js"></script>
