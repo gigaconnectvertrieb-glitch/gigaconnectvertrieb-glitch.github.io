@@ -1,32 +1,41 @@
-const DEMO = /kastanienallee|oderberger|schönhauser allee|danziger straße|kollwitzstraße|prenzlauer allee|helmholtzstraße|karl-liebknecht|kochstraße|alfred-kästner|berlin prenzlauer|leipzig südvorstadt/i;
-function scrub(raw) {
-  if (!raw || !DEMO.test(raw)) return raw;
+const DEMO = /kastanienallee|oderberger|schönhauser allee|danziger straße|kollwitzstraße|prenzlauer allee|helmholtzstraße|karl-liebknecht|kochstraße|alfred-kästner|berlin prenzlauer|leipzig südvorstadt|ter-berlin-prenzl|ter-leipzig-sued/i;
+const EMPTY = '{"territories":[],"visits":[],"plan":{"active":false,"mode":"huelle","points":[]}}';
+const origGet = localStorage.getItem.bind(localStorage);
+const origSet = localStorage.setItem.bind(localStorage);
+function clean(raw) {
+  if (!raw) return EMPTY;
+  if (!DEMO.test(raw)) return raw;
   try {
     const state = JSON.parse(raw);
     state.territories = (state.territories || []).filter((t) => !DEMO.test(JSON.stringify(t)));
     state.visits = (state.visits || []).filter((v) => !DEMO.test(JSON.stringify(v)));
     return JSON.stringify(state);
   } catch {
-    return null;
+    return EMPTY;
   }
 }
-let changed = false;
-for (const key of ["gm.v1", "gm.v2", "gm.v3"]) {
-  const next = scrub(localStorage.getItem(key));
-  if (next && next !== localStorage.getItem(key)) {
-    localStorage.setItem(key, next);
-    changed = true;
+localStorage.getItem = (key) => {
+  if (key === "gm.v1" || key === "gm.v2" || key === "gm.v3") return clean(origGet("gm.v3") || origGet("gm.v2") || origGet("gm.v1"));
+  return origGet(key);
+};
+localStorage.setItem = (key, value) => {
+  if (key === "gm.v1" || key === "gm.v2" || key === "gm.v3") {
+    const next = clean(value);
+    origSet("gm.v3", next);
+    if (DEMO.test(String(value)) && !sessionStorage.getItem("gm.wiped")) {
+      sessionStorage.setItem("gm.wiped", "1");
+      location.replace(location.pathname + "?v=8");
+    }
+    return;
   }
-}
+  origSet(key, value);
+};
+origSet("gm.v3", clean(origGet("gm.v3") || origGet("gm.v2") || origGet("gm.v1")));
+localStorage.removeItem("gm.v2");
+localStorage.removeItem("gm.v1");
 function hide() {
-  document.querySelectorAll(".door, .card, #detail").forEach((node) => {
-    if (node.id === "detail") return;
+  document.querySelectorAll(".door, .card").forEach((node) => {
     if (DEMO.test(node.textContent || "")) node.remove();
   });
 }
 new MutationObserver(hide).observe(document.documentElement, { childList: true, subtree: true });
-hide();
-if (changed && !sessionStorage.getItem("gm.wiped")) {
-  sessionStorage.setItem("gm.wiped", "1");
-  location.reload();
-}
