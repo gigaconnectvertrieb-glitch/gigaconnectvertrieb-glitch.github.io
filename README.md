@@ -1,10 +1,8 @@
 # Gebietsmanager
 
-Eigenständige Gebiets-App für den Außendienst. Nicht Teil von EnergyOne und nicht an dessen Postgres auf Render gebunden.
+Eigenständige Gebiets-App. Nicht Teil von EnergyOne.
 
-Gebiete anlegen, Gebäude aus OpenStreetMap lesen, Mitarbeitern zuweisen, Türen abgehen, Nachlauf in der Wochenliste.
-
-Backend ist das eigene Supabase-Projekt (`js/config.js`). Die App selbst ist statisch und läuft über GitHub Pages.
+Gebiete anlegen, Gebäude aus OpenStreetMap lesen, Team zuweisen, Türen abgehen, Wochenliste.
 
 ## Start
 
@@ -12,29 +10,12 @@ Backend ist das eigene Supabase-Projekt (`js/config.js`). Die App selbst ist sta
 npx serve .
 ```
 
-Oder `index.html` im Browser öffnen. Ohne Supabase-Sync liegen Daten lokal (`localStorage`, Schlüssel `gm.v2`).
+Daten liegen lokal (`localStorage`, `gm.v2`) und werden nach Supabase geschrieben, sobald Tabellen und Key gültig sind.
 
-## Funktionen
+## Supabase
 
-- Punkte auf der Karte setzen. Die Verbindung ist die Gebietsgrenze. Darin werden Straße, Hausnummer, Einfamilie/Mehrfamilie und Wohneinheiten aus OpenStreetMap gelesen und nach Straße sortiert.
-- Gebäude als Einfamilienhaus (1 Wohneinheit) oder Mehrfamilienhaus (mehrere Wohneinheiten)
-- Gebiet anlegen, GeoJSON oder CSV importieren (`street,house,zip,city,lat,lng`)
-- Mitarbeiter zuweisen und Gebiet annehmen
-- Besuch eintragen: nicht angetroffen, Laufzeit, Termin, kein Interesse, Abschluss
-- Wochenliste, sortiert nach Grund und Nachlaufdatum
-- Export als GeoJSON
+URL, Publishable Key und Secret Key stehen in `js/config.js`. Der Client nutzt den Secret Key.
 
-## Nachlauf
+Einmal im SQL-Editor ausführen: `supabase/schema.sql`.
 
-| Grund | Nachlauf |
-| --- | --- |
-| nicht angetroffen | 7 Tage |
-| Laufzeit passt nicht | 30 Tage |
-| Termin vereinbart | 7 Tage |
-| später nochmal | 3 Tage |
-
-## Offen
-
-- Supabase-Client und Tabellen fehlen noch. `js/config.js` hat URL und Dummy-Keys, `app.js` liest sie nicht.
-- Echter Publishable Key statt Dummy. Secret Key nicht in dieses öffentliche Repo.
-- Login und Team kommen aus Supabase, nicht aus der fest verdrahteten Demo-Liste.
+Danach lädt die App Gebiete, Türen, Besuche und Team von Supabase. Ist der Key ungültig oder fehlen Tabellen, bleibt alles lokal und der Status oben rechts zeigt den Grund.
