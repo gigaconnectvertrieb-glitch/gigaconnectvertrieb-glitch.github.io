@@ -2,6 +2,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY, SUPABASE_URL, supabaseConfigured } from "./config.js";
 
 const KEY = SUPABASE_SECRET_KEY || SUPABASE_PUBLISHABLE_KEY;
+const TABLES = {
+  staff: "gm_staff",
+  territories: "gm_territories",
+  doors: "gm_doors",
+  visits: "gm_visits",
+  members: "gm_territory_members",
+};
 
 export const cloud = supabaseConfigured()
   ? createClient(SUPABASE_URL, KEY, {
@@ -29,11 +36,11 @@ function fail(error, what) {
 export async function pullCloud() {
   if (!cloud) return null;
   const [territories, doors, visits, members, staff] = await Promise.all([
-    cloud.from("territories").select("*"),
-    cloud.from("doors").select("*").order("sort_order"),
-    cloud.from("visits").select("*"),
-    cloud.from("territory_members").select("*"),
-    cloud.from("staff").select("*"),
+    cloud.from(TABLES.territories).select("*"),
+    cloud.from(TABLES.doors).select("*").order("sort_order"),
+    cloud.from(TABLES.visits).select("*"),
+    cloud.from(TABLES.members).select("*"),
+    cloud.from(TABLES.staff).select("*"),
   ]);
   fail(territories.error, "Gebiete");
   fail(doors.error, "Gebäude");
@@ -134,11 +141,11 @@ export async function pushCloud(state) {
     list_status: v.list_status || "offen",
   }));
   const steps = [
-    ["Mitarbeiter", cloud.from("staff").upsert(staff)],
-    ["Gebiete", cloud.from("territories").upsert(territories)],
-    ["Gebäude", doors.length ? cloud.from("doors").upsert(doors) : Promise.resolve({ error: null })],
-    ["Zuweisung", members.length ? cloud.from("territory_members").upsert(members) : Promise.resolve({ error: null })],
-    ["Besuche", visits.length ? cloud.from("visits").upsert(visits) : Promise.resolve({ error: null })],
+    ["Mitarbeiter", cloud.from(TABLES.staff).upsert(staff)],
+    ["Gebiete", cloud.from(TABLES.territories).upsert(territories)],
+    ["Gebäude", doors.length ? cloud.from(TABLES.doors).upsert(doors) : Promise.resolve({ error: null })],
+    ["Zuweisung", members.length ? cloud.from(TABLES.members).upsert(members) : Promise.resolve({ error: null })],
+    ["Besuche", visits.length ? cloud.from(TABLES.visits).upsert(visits) : Promise.resolve({ error: null })],
   ];
   for (const [what, req] of steps) {
     const { error } = await req;
