@@ -1,6 +1,6 @@
 import { cloudLabel, pullCloud, pushCloud } from "./remote.js";
 
-const KEY = "gm.v2";
+const KEY = "gm.v3";
 const el = document.getElementById("cloud");
 const setCloud = (text) => {
   if (el) el.textContent = text;
@@ -34,7 +34,6 @@ pullCloud()
         ...current,
         territories: remote.territories,
         visits: remote.visits,
-        team: remote.team.length ? remote.team : current.team,
       };
       orig(KEY, JSON.stringify(next));
       setCloud(`Supabase · ${remote.territories.length} Gebiete`);
