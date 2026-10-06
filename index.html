@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gebietsmanager</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
-  <link rel="stylesheet" href="css/app.css?v=13" />
-  <link rel="stylesheet" href="css/mobile.css?v=13" />
-  <link rel="stylesheet" href="css/snap.css?v=13" />
+  <link rel="stylesheet" href="css/app.css?v=14" />
+  <link rel="stylesheet" href="css/mobile.css?v=14" />
+  <link rel="stylesheet" href="css/snap.css?v=14" />
 </head>
 <body>
   <div class="app">
@@ -25,7 +24,7 @@
     <aside class="side">
       <h2>PLZ</h2>
       <form class="form plz-form" id="plz-form">
-        <input name="plz" inputmode="numeric" maxlength="5" placeholder="PLZ, z. B. 10435" required />
+        <input name="plz" inputmode="numeric" maxlength="5" placeholder="PLZ, z. B. 63322" required />
         <select name="kind"><option value="efh">Einfamilie</option><option value="mfh">Mehrfamilie</option></select>
         <button class="btn primary" type="submit">Geordnet suchen</button>
         <p class="empty" id="plz-status">Nur PLZ und Typ. Gebäude kommen nach Straße und Hausnummer.</p>
@@ -39,22 +38,19 @@
   </div>
   <div class="modal" id="modal"><form class="dialog" id="dialog"></form></div>
   <input type="file" id="file" accept=".geojson,.json,.csv,application/json,text/csv" hidden />
-  <script src="js/wipe-berlin.js?v=13"></script>
+  <script src="js/wipe-berlin.js?v=14"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
   <script>L.map = (function (orig) { return function () { const map = orig.apply(this, arguments); window.__gmMap = map; return map; }; })(L.map);</script>
-  <script src="js/no-demo.js?v=13"></script>
-  <script src="js/strip-team.js?v=13"></script>
-  <script src="js/purge-demo.js?v=13"></script>
-  <script type="module" src="js/boot.js?v=13"></script>
-  <script type="module" src="js/app.js?v=13"></script>
-  <script type="module" src="js/snap.js?v=13"></script>
-  <script type="module" src="js/delete-area.js?v=13"></script>
-  <script type="module" src="js/route.js?v=13"></script>
-  <script type="module" src="js/google3d.js?v=13"></script>
-  <script type="module" src="js/labels.js?v=13"></script>
-  <script src="js/map3d.js?v=13"></script>
-  <script type="module" src="js/buildings3d.js?v=13"></script>
+  <script src="js/no-demo.js?v=14"></script>
+  <script src="js/strip-team.js?v=14"></script>
+  <script type="module" src="js/boot.js?v=14"></script>
+  <script type="module" src="js/app.js?v=14"></script>
+  <script type="module" src="js/snap.js?v=14"></script>
+  <script type="module" src="js/delete-area.js?v=14"></script>
+  <script type="module" src="js/route.js?v=14"></script>
+  <script type="module" src="js/google3d.js?v=14"></script>
+  <script type="module" src="js/labels.js?v=14"></script>
+  <script src="js/map3d.js?v=14"></script>
+  <script src="js/field-run.js?v=14"></script>
 </body>
 </html>
