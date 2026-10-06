@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>E1 Außendienst</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root { color-scheme: dark; --green:#3dd68c; --ink:#e7f3ec; --bg:#0e1c16; --card:#173528; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+    header { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; }
+    a { color:var(--green); }
+    .screen { display:none; padding:0 14px 92px; }
+    .screen.on { display:block; }
+    #karte.on { padding:0 0 78px; }
+    #map { height: calc(100dvh - 132px); }
+    input, button, select { min-height:44px; border-radius:10px; border:1px solid var(--green); background:var(--card); color:var(--ink); padding:0 12px; }
+    button { cursor:pointer; }
+    form, .row { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+    .card { background:var(--card); border-radius:12px; padding:12px; margin:8px 0; }
+    .big { font-size:22px; font-weight:700; }
+    nav { position:fixed; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(5,1fr); background:#10241c; border-top:1px solid var(--green); }
+    nav button { border:0; border-radius:0; background:transparent; }
+    nav button.on { color:var(--green); }
+    .gate { position:fixed; inset:0; display:grid; place-items:center; background:var(--bg); z-index:5; }
+    .gate div { width:min(360px,92vw); display:grid; gap:10px; }
+    .muted { color:#b7cfc4; }
+  </style>
+</head>
+<body>
+  <form class="gate" id="gate">
+    <div>
+      <b>E1 Außendienst</b>
+      <span class="muted">Strom und Gas · <a href="https://e1direktvertrieb.de">e1direktvertrieb.de</a></span>
+      <input name="name" placeholder="Orhan oder Luca" required />
+      <input name="pin" type="password" placeholder="Passwort" required />
+      <button type="submit">Start</button>
+      <p id="err" class="muted"></p>
+    </div>
+  </form>
+  <header>
+    <div><b id="who">E1</b><div class="muted">Heute, Karte, Lauf, Liste</div></div>
+    <button id="out" type="button">Abmelden</button>
+  </header>
+  <section class="screen on" id="heute">
+    <div class="card"><div class="muted">Nächstes Haus</div><div class="big" id="next">Kein Gebiet</div><div id="after" class="muted"></div></div>
+    <div class="row">
+      <button data-st="nicht_angetroffen">Nicht da</button>
+      <button data-st="kein_interesse">Kein Interesse</button>
+      <button data-st="nachlauf">Nachlauf</button>
+      <button data-st="abschluss">Abschluss</button>
+    </div>
+    <form id="area-form"><input name="name" placeholder="Gebietsname" required /><button>Gebiet anlegen</button></form>
+    <div id="areas"></div>
+  </section>
+  <section class="screen" id="karte">
+    <form id="place"><input name="q" placeholder="Stadt oder Straße" required /><button>Zeigen</button><button type="button" id="clear">Highlight weg</button></form>
+    <div id="map"></div>
+  </section>
+  <section class="screen" id="lauf"><div id="route"></div></section>
+  <section class="screen" id="liste"><div id="week"></div></section>
+  <section class="screen" id="profil">
+    <div class="card"><b>Profil</b><p class="muted">Besuche bleiben auf diesem Gerät und werden bei Netz nach Supabase geschickt.</p><p id="sync" class="muted"></p></div>
+  </section>
+  <nav>
+    <button data-tab="heute" class="on">Heute</button>
+    <button data-tab="karte">Karte</button>
+    <button data-tab="lauf">Lauf</button>
+    <button data-tab="liste">Liste</button>
+    <button data-tab="profil">Profil</button>
+  </nav>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const KEY = "e1.field.v1";
+    const URL = "https://kekojtckeefmxhiaziur.supabase.co";
+    const API = "sb_publishable_dZDpEtY-YsfbulpdEC0Lxw_o82SPtwh";
+    const USERS = [{ id:"orhan", name:"Orhan" }, { id:"luca", name:"Luca" }];
+    const PASS = "E12026!";
+    const load = () => JSON.parse(localStorage.getItem(KEY) || '{"areas":[],"visits":[]}');
+    const save = (s) => localStorage.setItem(KEY, JSON.stringify(s));
+    let state = load();
+    let user = JSON.parse(localStorage.getItem("e1.user") || "null");
+    let map, highlight, selected = state.areas[0]?.id || null;
+    const num = (h) => parseInt(String(h).replace(/\D/g, ""), 10) || 0;
+    const label = (d) => `${d.street} ${d.house}`;
+    function doors() {
+      const area = state.areas.find((a) => a.id === selected);
+      return (area?.doors || []).slice().sort((a,b) => a.street.localeCompare(b.street,"de") || num(a.house)-num(b.house));
+    }
+    function openDoors() { return doors().filter((d) => d.status !== "abschluss" && d.status !== "kein_interesse"); }
+    function show(tab) {
+      document.querySelectorAll(".screen").forEach((n) => n.classList.toggle("on", n.id === tab));
+      document.querySelectorAll("nav button").forEach((n) => n.classList.toggle("on", n.dataset.tab === tab));
+      if (tab === "karte" && map) setTimeout(() => map.invalidateSize(), 50);
+    }
+    function render() {
+      const open = openDoors();
+      document.getElementById("next").textContent = open[0] ? label(open[0]) : "Kein offenes Haus";
+      document.getElementById("after").textContent = open[1] ? `Danach ${label(open[1])}` : "";
+      document.getElementById("areas").innerHTML = state.areas.map((a) => `<button class="card" data-id="${a.id}">${a.name}<br><span class="muted">${a.doors.length} Häuser</span></button>`).join("") || `<p class="muted">Noch kein Gebiet.</p>`;
+      document.getElementById("route").innerHTML = open.map((d,i) => `<div class="card">${i+1}. ${label(d)} · ${d.kind || "unsicher"}</div>`).join("") || `<p class="muted">Nichts im Lauf.</p>`;
+      document.getElementById("week").innerHTML = state.visits.slice().reverse().map((v) => `<div class="card">${v.street} ${v.house}<br><span class="muted">${v.reason} · ${v.user}</span></div>`).join("") || `<p class="muted">Keine Besuche.</p>`;
+      document.getElementById("sync").textContent = navigator.onLine ? "Netz da" : "Offline, Besuche warten hier";
+      if (map) drawPoints();
+    }
+    function drawPoints() {
+      if (!window.__points) window.__points = L.layerGroup().addTo(map);
+      window.__points.clearLayers();
+      doors().forEach((d) => L.circleMarker([d.lat, d.lng], { radius:6, color:d.status==="abschluss"?"#3dd68c":"#7eb6ff" }).bindTooltip(label(d)).addTo(window.__points));
+    }
+    async function pushVisit(v) {
+      if (!navigator.onLine) return;
+      await fetch(`${URL}/rest/v1/gm_visits`, { method:"POST", headers:{ apikey:API, Authorization:`Bearer ${API}`, "Content-Type":"application/json", Prefer:"return=minimal" }, body:JSON.stringify({ id:v.id, door_id:v.door_id, territory_id:v.area_id, user_id:v.user, reason:v.reason, street:v.street, house:v.house }) }).catch(() => {});
+    }
+    document.getElementById("gate").onsubmit = (e) => {
+      e.preventDefault();
+      const name = e.target.name.value.trim().toLowerCase();
+      const person = USERS.find((u) => u.name.toLowerCase() === name);
+      if (!person || e.target.pin.value !== PASS) { document.getElementById("err").textContent = "Benutzer oder Passwort falsch"; return; }
+      user = person;
+      localStorage.setItem("e1.user", JSON.stringify(person));
+      document.getElementById("who").textContent = person.name;
+      e.target.remove();
+    };
+    if (user) { document.getElementById("gate").remove(); document.getElementById("who").textContent = user.name; }
+    document.getElementById("out").onclick = () => { localStorage.removeItem("e1.user"); location.reload(); };
+    document.querySelectorAll("nav button").forEach((b) => b.onclick = () => show(b.dataset.tab));
+    document.querySelectorAll("[data-st]").forEach((b) => b.onclick = () => {
+      const door = openDoors()[0];
+      if (!door || !user) return;
+      door.status = b.dataset.st;
+      const visit = { id:`vis-${Date.now()}`, door_id:door.id, area_id:selected, user:user.name, reason:b.dataset.st, street:door.street, house:door.house };
+      state.visits.push(visit);
+      save(state);
+      pushVisit(visit);
+      render();
+    });
+    document.getElementById("area-form").onsubmit = (e) => {
+      e.preventDefault();
+      const area = { id:`area-${Date.now()}`, name:e.target.name.value.trim(), doors:[] };
+      state.areas.push(area); selected = area.id; save(state); e.target.reset(); render();
+    };
+    document.getElementById("areas").onclick = (e) => { const id = e.target.closest("button")?.dataset.id; if (id) { selected = id; render(); } };
+    map = L.map("map").setView([49.98, 8.83], 13);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" }).addTo(map);
+    map.on("click", async (ev) => {
+      if (!selected) return;
+      const q = `[out:json][timeout:12];(way["building"](around:30,${ev.latlng.lat},${ev.latlng.lng}););out center tags;`;
+      let street = "Gesetzter Punkt", house = String(state.areas.find(a=>a.id===selected).doors.length+1);
+      try {
+        const res = await fetch("https://overpass-api.de/api/interpreter", { method:"POST", body:`data=${encodeURIComponent(q)}` });
+        const data = await res.json();
+        const el = data.elements?.[0];
+        if (el?.tags) { street = el.tags["addr:street"] || street; house = el.tags["addr:housenumber"] || house; }
+      } catch {}
+      state.areas.find(a=>a.id===selected).doors.push({ id:`d-${Date.now()}`, street, house, lat:ev.latlng.lat, lng:ev.latlng.lng, status:"offen", kind:"unsicher" });
+      save(state); render();
+    });
+    document.getElementById("place").onsubmit = async (e) => {
+      e.preventDefault();
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&polygon_geojson=1&countrycodes=de&limit=1&q=${encodeURIComponent(e.target.q.value)}`);
+      const [row] = await res.json();
+      if (!row) return;
+      if (highlight) map.removeLayer(highlight);
+      if (row.geojson && row.addresstype !== "city") {
+        highlight = L.geoJSON(row.geojson, { style:{ color:"#e23b3b", weight:7 } }).addTo(map);
+        map.fitBounds(highlight.getBounds().pad(0.3));
+      } else map.setView([row.lat, row.lon], 13);
+    };
+    document.getElementById("clear").onclick = () => { if (highlight) map.removeLayer(highlight); highlight = null; };
+    map.on("moveend", () => { if (highlight && (!map.getBounds().intersects(highlight.getBounds()) || map.getZoom() < 14)) { map.removeLayer(highlight); highlight = null; } });
+    render();
+  </script>
+</body>
+</html>
