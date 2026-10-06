@@ -1,7 +1,10 @@
 const URL = "https://kekojtckeefmxhiaziur.supabase.co";
 const KEY = "sb_publishable_dZDpEtY-YsfbulpdEC0Lxw_o82SPtwh";
 const SESSION = "gm.rep.session";
-const USER = { id: "orhan", name: "Orhan", pin: "E12026!" };
+const USERS = [
+  { id: "orhan", name: "Orhan", pin: "E12026!" },
+  { id: "luca", name: "Luca", pin: "E12026!" },
+];
 
 function session() {
   try { return JSON.parse(localStorage.getItem(SESSION) || "null"); }
@@ -20,7 +23,7 @@ async function saveStaff(person) {
   });
 }
 function gate() {
-  if (session()?.id === USER.id || document.getElementById("login-gate")) return;
+  if (session() || document.getElementById("login-gate")) return;
   const panel = document.createElement("form");
   panel.id = "login-gate";
   panel.innerHTML = `<div><b>Außendienst</b><p>Benutzer und Passwort.</p><input name="name" placeholder="Benutzer" required /><input name="pin" type="password" placeholder="Passwort" required /><button type="submit">Start</button><p class="empty" id="login-error"></p></div>`;
@@ -30,15 +33,16 @@ function gate() {
   document.head.appendChild(style);
   panel.onsubmit = async (event) => {
     event.preventDefault();
-    const name = panel.name.value.trim();
+    const name = panel.name.value.trim().toLowerCase();
     const pin = panel.pin.value;
-    if (name.toLowerCase() !== USER.name.toLowerCase() || pin !== USER.pin) {
+    const person = USERS.find((user) => user.name.toLowerCase() === name && user.pin === pin);
+    if (!person) {
       document.getElementById("login-error").textContent = "Benutzer oder Passwort falsch";
       return;
     }
-    localStorage.setItem(SESSION, JSON.stringify(USER));
-    localStorage.setItem("gm.rep", USER.name);
-    await saveStaff(USER);
+    localStorage.setItem(SESSION, JSON.stringify(person));
+    localStorage.setItem("gm.rep", person.name);
+    await saveStaff(person);
     panel.remove();
   };
 }
