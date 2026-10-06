@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gebietsmanager</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/app.css?v=14" />
-  <link rel="stylesheet" href="css/mobile.css?v=14" />
-  <link rel="stylesheet" href="css/snap.css?v=14" />
+  <link rel="stylesheet" href="css/app.css?v=15" />
+  <link rel="stylesheet" href="css/mobile.css?v=15" />
+  <link rel="stylesheet" href="css/snap.css?v=15" />
 </head>
 <body>
   <div class="app">
@@ -38,19 +38,20 @@
   </div>
   <div class="modal" id="modal"><form class="dialog" id="dialog"></form></div>
   <input type="file" id="file" accept=".geojson,.json,.csv,application/json,text/csv" hidden />
-  <script src="js/wipe-berlin.js?v=14"></script>
+  <script src="js/wipe-berlin.js?v=15"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>L.map = (function (orig) { return function () { const map = orig.apply(this, arguments); window.__gmMap = map; return map; }; })(L.map);</script>
-  <script src="js/no-demo.js?v=14"></script>
-  <script src="js/strip-team.js?v=14"></script>
-  <script type="module" src="js/boot.js?v=14"></script>
-  <script type="module" src="js/app.js?v=14"></script>
-  <script type="module" src="js/snap.js?v=14"></script>
-  <script type="module" src="js/delete-area.js?v=14"></script>
-  <script type="module" src="js/route.js?v=14"></script>
-  <script type="module" src="js/google3d.js?v=14"></script>
-  <script type="module" src="js/labels.js?v=14"></script>
-  <script src="js/map3d.js?v=14"></script>
-  <script src="js/field-run.js?v=14"></script>
+  <script src="js/no-demo.js?v=15"></script>
+  <script src="js/strip-team.js?v=15"></script>
+  <script type="module" src="js/boot.js?v=15"></script>
+  <script type="module" src="js/app.js?v=15"></script>
+  <script type="module" src="js/snap.js?v=15"></script>
+  <script type="module" src="js/delete-area.js?v=15"></script>
+  <script type="module" src="js/route.js?v=15"></script>
+  <script type="module" src="js/google3d.js?v=15"></script>
+  <script type="module" src="js/labels.js?v=15"></script>
+  <script src="js/map3d.js?v=15"></script>
+  <script src="js/field-run.js?v=15"></script>
+  <script src="js/points.js?v=15"></script>
 </body>
 </html>
