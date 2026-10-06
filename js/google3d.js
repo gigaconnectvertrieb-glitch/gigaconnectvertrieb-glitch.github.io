@@ -3,7 +3,7 @@ import { GOOGLE_MAPS_API_KEY } from "./config.js";
 function center() {
   const map = window.__gmMap;
   const c = map?.getCenter();
-  return c ? { lat: c.lat, lng: c.lng } : { lat: 51.2, lng: 10.4 };
+  return c ? { lat: c.lat, lng: c.lng } : { lat: 52.54, lng: 13.415 };
 }
 
 function loadGoogle() {
@@ -22,18 +22,19 @@ async function show() {
   const wrap = document.querySelector(".map-wrap");
   const point = center();
   await loadGoogle();
+  const { Map3DElement, MapMode } = await google.maps.importLibrary("maps3d");
   let view = document.getElementById("google-3d");
   if (!view) {
-    view = document.createElement("gmp-map-3d");
+    view = new Map3DElement();
     view.id = "google-3d";
     view.style.cssText = "position:absolute;inset:0;z-index:4;";
     wrap.appendChild(view);
   }
-  view.center = point;
+  view.center = { lat: point.lat, lng: point.lng, altitude: 0 };
   view.tilt = 67;
   view.heading = 20;
   view.range = 800;
-  view.mode = "hybrid";
+  view.mode = MapMode.HYBRID;
   view.hidden = false;
 }
 
