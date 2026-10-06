@@ -13,13 +13,7 @@
 <body>
   <div class="app">
     <header class="top">
-      <div class="brand">
-        <div class="mark">E1</div>
-        <div>
-          <h1>Gebietsmanager</h1>
-          <p>Eigene Gebiets-App</p>
-        </div>
-      </div>
+      <div class="brand"><div class="mark">E1</div><div><h1>Gebietsmanager</h1><p>Eigene Gebiets-App</p></div></div>
       <div class="stats" id="stats"></div>
       <span class="cloud" id="cloud">Lokal</span>
       <div class="top-actions">
@@ -32,10 +26,7 @@
       <h2>PLZ</h2>
       <form class="form plz-form" id="plz-form">
         <input name="plz" inputmode="numeric" maxlength="5" placeholder="PLZ, z. B. 10435" required />
-        <select name="kind">
-          <option value="efh">Einfamilie</option>
-          <option value="mfh">Mehrfamilie</option>
-        </select>
+        <select name="kind"><option value="efh">Einfamilie</option><option value="mfh">Mehrfamilie</option></select>
         <button class="btn primary" type="submit">Geordnet suchen</button>
         <p class="empty" id="plz-status">Nur PLZ und Typ. Gebäude kommen nach Straße und Hausnummer.</p>
       </form>
@@ -80,5 +71,6 @@
   <script type="module" src="js/google3d.js"></script>
   <script type="module" src="js/labels.js"></script>
   <script src="js/map3d.js"></script>
+  <script type="module" src="js/buildings3d.js"></script>
 </body>
 </html>
