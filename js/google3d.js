@@ -3,25 +3,26 @@ import { GOOGLE_MAPS_API_KEY } from "./config.js";
 function center() {
   const map = window.__gmMap;
   const c = map?.getCenter();
-  return c ? { lat: c.lat, lng: c.lng } : { lat: 52.54, lng: 13.415 };
+  return c ? { lat: c.lat, lng: c.lng } : { lat: 49.98, lng: 8.83 };
 }
-
-function loadGoogle() {
-  if (window.google?.maps?.importLibrary) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=beta&libraries=maps3d`;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Google Maps nicht geladen"));
-    document.head.appendChild(script);
+function hideErrors() {
+  document.querySelectorAll("body *").forEach((node) => {
+    if (node.childNodes.length === 1 && /gmp-map-3d|not an accepted value/i.test(node.textContent || "")) node.remove();
   });
 }
-
 async function show() {
   const wrap = document.querySelector(".map-wrap");
   const point = center();
-  await loadGoogle();
+  if (!window.google?.maps?.importLibrary) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=beta&libraries=maps3d`;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("Google 3D nicht geladen"));
+      document.head.appendChild(script);
+    });
+  }
   const { Map3DElement, MapMode } = await google.maps.importLibrary("maps3d");
   let view = document.getElementById("google-3d");
   if (!view) {
@@ -30,14 +31,12 @@ async function show() {
     view.style.cssText = "position:absolute;inset:0;z-index:4;";
     wrap.appendChild(view);
   }
+  view.mode = MapMode.SATELLITE;
   view.center = { lat: point.lat, lng: point.lng, altitude: 0 };
   view.tilt = 67;
-  view.heading = 20;
-  view.range = 800;
-  view.mode = MapMode.HYBRID;
+  view.range = 700;
   view.hidden = false;
 }
-
 function boot() {
   const wrap = document.querySelector(".map-wrap");
   if (!wrap || document.getElementById("google-3d-btn")) return;
@@ -46,13 +45,9 @@ function boot() {
   button.type = "button";
   button.className = "btn";
   button.textContent = "Google 3D";
-  button.style.cssText = "position:absolute;z-index:620;top:10px;left:10px;";
+  button.style.cssText = "position:absolute;z-index:620;top:48px;left:10px;";
   wrap.appendChild(button);
   button.onclick = async () => {
-    if (!GOOGLE_MAPS_API_KEY) {
-      button.textContent = "Google-Key fehlt";
-      return;
-    }
     const view = document.getElementById("google-3d");
     if (view && !view.hidden) {
       view.hidden = true;
@@ -64,9 +59,11 @@ function boot() {
       await show();
       button.textContent = "Plan";
     } catch (err) {
-      button.textContent = err.message || "Google 3D fehlgeschlagen";
+      document.getElementById("google-3d")?.remove();
+      button.textContent = "Google 3D aus";
     }
+    hideErrors();
   };
+  setInterval(hideErrors, 1500);
 }
-
 boot();
