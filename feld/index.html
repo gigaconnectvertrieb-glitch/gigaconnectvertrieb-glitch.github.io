@@ -75,7 +75,7 @@
     const KEY = "e1.field.v1";
     const URL = "https://kekojtckeefmxhiaziur.supabase.co";
     const API = "sb_publishable_dZDpEtY-YsfbulpdEC0Lxw_o82SPtwh";
-    const USERS = [{ id:"orhan", name:"Orhan" }, { id:"luca", name:"Luca" }];
+    const USERS = [{ id:"orhan", name:"Orhan", role:"admin" }, { id:"luca", name:"Luca", role:"admin" }];
     const PASS = "E12026!";
     const load = () => JSON.parse(localStorage.getItem(KEY) || '{"areas":[],"visits":[]}');
     const save = (s) => localStorage.setItem(KEY, JSON.stringify(s));
@@ -84,8 +84,12 @@
     let map, highlight, selected = state.areas[0]?.id || null;
     const num = (h) => parseInt(String(h).replace(/\D/g, ""), 10) || 0;
     const label = (d) => `${d.street} ${d.house}`;
-    function doors() {
-      const area = state.areas.find((a) => a.id === selected);
+    function visibleAreas() {
+      if (!user || user.role === "admin") return state.areas;
+      return state.areas.filter((a) => (a.members || []).includes(user.id));
+    }
+      function doors() {
+      const area = visibleAreas().find((a) => a.id === selected) || visibleAreas()[0];
       return (area?.doors || []).slice().sort((a,b) => a.street.localeCompare(b.street,"de") || num(a.house)-num(b.house));
     }
     function openDoors() { return doors().filter((d) => d.status !== "abschluss" && d.status !== "kein_interesse"); }
@@ -98,7 +102,7 @@
       const open = openDoors();
       document.getElementById("next").textContent = open[0] ? label(open[0]) : "Kein offenes Haus";
       document.getElementById("after").textContent = open[1] ? `Danach ${label(open[1])}` : "";
-      document.getElementById("areas").innerHTML = state.areas.map((a) => `<button class="card" data-id="${a.id}">${a.name}<br><span class="muted">${a.doors.length} Häuser</span></button>`).join("") || `<p class="muted">Noch kein Gebiet.</p>`;
+      document.getElementById("areas").innerHTML = visibleAreas().map((a) => `<div class="card"><button data-id="${a.id}">${a.name}<br><span class="muted">${a.doors.length} Häuser · ${(a.members||[]).join(", ") || "nicht zugewiesen"}</span></button>${user?.role==="admin" ? `<form data-assign="${a.id}"><select name="member">${USERS.map((u)=>`<option value="${u.id}">${u.name}</option>`).join("")}</select><button>Aufspielen</button></form>` : ""}</div>`).join("") || `<p class="muted">Noch kein Gebiet.</p>`;
       document.getElementById("route").innerHTML = open.map((d,i) => `<div class="card">${i+1}. ${label(d)} · ${d.kind || "unsicher"}</div>`).join("") || `<p class="muted">Nichts im Lauf.</p>`;
       document.getElementById("week").innerHTML = state.visits.slice().reverse().map((v) => `<div class="card">${v.street} ${v.house}<br><span class="muted">${v.reason} · ${v.user}</span></div>`).join("") || `<p class="muted">Keine Besuche.</p>`;
       document.getElementById("sync").textContent = navigator.onLine ? "Netz da" : "Offline, Besuche warten hier";
@@ -138,10 +142,20 @@
     });
     document.getElementById("area-form").onsubmit = (e) => {
       e.preventDefault();
-      const area = { id:`area-${Date.now()}`, name:e.target.name.value.trim(), doors:[] };
+      const area = { id:`area-${Date.now()}`, name:e.target.name.value.trim(), doors:[], members:[] };
       state.areas.push(area); selected = area.id; save(state); e.target.reset(); render();
     };
-    document.getElementById("areas").onclick = (e) => { const id = e.target.closest("button")?.dataset.id; if (id) { selected = id; render(); } };
+    document.getElementById("areas").onclick = (e) => {
+      const assign = e.target.closest("form")?.dataset.assign;
+      if (assign && e.target.tagName === "BUTTON") {
+        e.preventDefault();
+        const area = state.areas.find((a) => a.id === assign);
+        const member = e.target.closest("form").member.value;
+        area.members = Array.from(new Set([...(area.members || []), member]));
+        save(state); render(); return;
+      }
+      const id = e.target.closest("button")?.dataset.id; if (id) { selected = id; render(); }
+    };
     map = L.map("map").setView([49.98, 8.83], 13);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" }).addTo(map);
     map.on("click", async (ev) => {
