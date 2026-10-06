@@ -1,18 +1,18 @@
 # Gebietsmanager
 
-Feld-App für E1 Direktvertrieb: Gebiete aufspielen, Mitarbeitern zuweisen, Türen abgehen, Nachlauf in der Wochenliste.
+Eigenständige Gebiets-App für den Außendienst. Nicht Teil von EnergyOne und nicht an dessen Postgres auf Render gebunden.
 
-Passt zum Datenmodell aus [EnergyOne](https://github.com/gigaconnectvertrieb-glitch/EnergyOne) (`territories`, `field_doors`, `field_visits`, `territory_members`).
+Gebiete anlegen, Gebäude aus OpenStreetMap lesen, Mitarbeitern zuweisen, Türen abgehen, Nachlauf in der Wochenliste.
+
+Backend ist das eigene Supabase-Projekt (`js/config.js`). Die App selbst ist statisch und läuft über GitHub Pages.
 
 ## Start
-
-Die App ist statisch. Datei `index.html` im Browser öffnen, oder:
 
 ```bash
 npx serve .
 ```
 
-Daten liegen im Browser (`localStorage`, Schlüssel `gm.v1`). Demo-Gebiet: Berlin Prenzlauer Berg, wie in EnergyOne.
+Oder `index.html` im Browser öffnen. Ohne Supabase-Sync liegen Daten lokal (`localStorage`, Schlüssel `gm.v2`).
 
 ## Funktionen
 
@@ -24,9 +24,7 @@ Daten liegen im Browser (`localStorage`, Schlüssel `gm.v1`). Demo-Gebiet: Berli
 - Wochenliste, sortiert nach Grund und Nachlaufdatum
 - Export als GeoJSON
 
-## EnergyOne
-
-Besuchsgründe und Nachlauf-Tage entsprechen `src/lib/field.ts`:
+## Nachlauf
 
 | Grund | Nachlauf |
 | --- | --- |
@@ -34,3 +32,9 @@ Besuchsgründe und Nachlauf-Tage entsprechen `src/lib/field.ts`:
 | Laufzeit passt nicht | 30 Tage |
 | Termin vereinbart | 7 Tage |
 | später nochmal | 3 Tage |
+
+## Offen
+
+- Supabase-Client und Tabellen fehlen noch. `js/config.js` hat URL und Dummy-Keys, `app.js` liest sie nicht.
+- Echter Publishable Key statt Dummy. Secret Key nicht in dieses öffentliche Repo.
+- Login und Team kommen aus Supabase, nicht aus der fest verdrahteten Demo-Liste.
