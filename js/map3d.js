@@ -1,16 +1,9 @@
+const SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const STYLE = {
   version: 8,
   glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
   sources: {
-    sat: {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      ],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: "Esri, Maxar, Earthstar Geographics",
-    },
+    sat: { type: "raster", tiles: [SAT], tileSize: 256, maxzoom: 19, attribution: "Esri, Maxar, Earthstar Geographics" },
     terrain: {
       type: "raster-dem",
       tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
@@ -19,51 +12,45 @@ const STYLE = {
       maxzoom: 15,
     },
   },
-  layers: [
-    { id: "sat", type: "raster", source: "sat", paint: { "raster-resampling": "linear", "raster-fade-duration": 0 } },
-  ],
+  layers: [{ id: "sat", type: "raster", source: "sat", paint: { "raster-resampling": "linear", "raster-fade-duration": 0 } }],
 };
+
+function fallback(map) {
+  map.eachLayer((layer) => {
+    if (layer instanceof L.TileLayer) map.removeLayer(layer);
+  });
+  L.tileLayer(SAT, { maxZoom: 19, attribution: "Esri, Maxar" }).addTo(map);
+}
 
 function boot() {
   const map = window.__gmMap;
-  if (!map || !window.L || !L.maplibreGL || !window.maplibregl) return;
+  if (!map || !window.L) return;
+  map.setMaxZoom(19);
+  if (!L.maplibreGL || !window.maplibregl) {
+    fallback(map);
+    return;
+  }
   map.eachLayer((layer) => {
     if (layer instanceof L.TileLayer) map.removeLayer(layer);
   });
   const gl = L.maplibreGL({
     style: STYLE,
-    pitch: 58,
-    bearing: -18,
+    pitch: 62,
+    bearing: -20,
     maxPitch: 78,
     attributionControl: false,
   }).addTo(map);
-  map.setMaxZoom(19);
   const raw = gl.getMaplibreMap();
   raw.setPixelRatio(Math.min(window.devicePixelRatio || 2, 3));
   raw.on("load", () => {
-    if (!raw.getSource("terrain")) return;
-    raw.setTerrain({ source: "terrain", exaggeration: 1.35 });
+    if (raw.getSource("terrain")) raw.setTerrain({ source: "terrain", exaggeration: 1.4 });
+    raw.easeTo({ pitch: 62, bearing: -20, duration: 600 });
   });
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "btn";
-  button.textContent = "3D";
-  button.style.position = "absolute";
-  button.style.zIndex = "600";
-  button.style.top = "10px";
-  button.style.right = "10px";
-  document.querySelector(".map-wrap")?.appendChild(button);
-  let pitched = true;
-  button.onclick = () => {
-    pitched = !pitched;
-    raw.easeTo({ pitch: pitched ? 58 : 0, bearing: pitched ? -18 : 0, duration: 500 });
-    button.classList.toggle("primary", pitched);
-  };
-  button.classList.add("primary");
+  raw.on("error", () => fallback(map));
 }
 
 const wait = setInterval(() => {
-  if (window.__gmMap && window.L && L.maplibreGL) {
+  if (window.__gmMap && window.L) {
     clearInterval(wait);
     boot();
   }
