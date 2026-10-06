@@ -1,4 +1,5 @@
-const STREET = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const CARTO_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfYTY2dTU1cnMiLCJqdGkiOiJhYWFlOTExMTQyOWFmNTU4MTdlOGUxZGMxODYwYjRmZiJ9.TYAmCxDAUDhKaIV0XT5afh_4vKnWoZ8nbskoX7nkEWg";
+const STREET = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=" + CARTO_KEY;
 const SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 let satLayer = null;
 
