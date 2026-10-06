@@ -1,41 +1,44 @@
+const STREET = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 const SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-const LABELS = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
-const ROADS = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
-const STYLE = {
-  version: 8,
-  glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-  sources: {
-    sat: { type: "raster", tiles: [SAT], tileSize: 256, maxzoom: 19, attribution: "Esri, Maxar" },
-    roads: { type: "raster", tiles: [ROADS], tileSize: 256, maxzoom: 19 },
-    labels: { type: "raster", tiles: [LABELS], tileSize: 256, maxzoom: 19 },
-    terrain: { type: "raster-dem", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], encoding: "terrarium", tileSize: 256, maxzoom: 15 },
-  },
-  layers: [
-    { id: "sat", type: "raster", source: "sat", paint: { "raster-resampling": "linear", "raster-fade-duration": 0 } },
-    { id: "roads", type: "raster", source: "roads", paint: { "raster-opacity": 0.85 } },
-    { id: "labels", type: "raster", source: "labels", paint: { "raster-opacity": 1 } },
-  ],
-};
-function fallback(map) {
-  map.eachLayer((layer) => { if (layer instanceof L.TileLayer) map.removeLayer(layer); });
-  L.tileLayer(SAT, { maxZoom: 19, attribution: "Esri, Maxar" }).addTo(map);
-  L.tileLayer(ROADS, { maxZoom: 19, opacity: 0.85 }).addTo(map);
-  L.tileLayer(LABELS, { maxZoom: 19 }).addTo(map);
-}
+let satLayer = null;
+
 function boot() {
   const map = window.__gmMap;
   if (!map || !window.L) return;
-  map.setMaxZoom(19);
-  if (!L.maplibreGL || !window.maplibregl) { fallback(map); return; }
-  map.eachLayer((layer) => { if (layer instanceof L.TileLayer) map.removeLayer(layer); });
-  const gl = L.maplibreGL({ style: STYLE, pitch: 58, bearing: -18, maxPitch: 78, attributionControl: false }).addTo(map);
-  const raw = gl.getMaplibreMap();
-  window.__gmGl = raw;
-  raw.setPixelRatio(Math.min(window.devicePixelRatio || 2, 3));
-  raw.on("load", () => {
-    if (raw.getSource("terrain")) raw.setTerrain({ source: "terrain", exaggeration: 1.2 });
-    raw.easeTo({ pitch: 58, bearing: -18, duration: 500 });
+  map.setMaxZoom(20);
+  map.eachLayer((layer) => {
+    if (layer instanceof L.TileLayer) map.removeLayer(layer);
   });
-  raw.on("error", () => fallback(map));
+  L.tileLayer(STREET, {
+    maxZoom: 20,
+    subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap, &copy; CARTO",
+  }).addTo(map);
+  const wrap = document.querySelector(".map-wrap");
+  if (!wrap || document.getElementById("sat-toggle")) return;
+  const button = document.createElement("button");
+  button.id = "sat-toggle";
+  button.type = "button";
+  button.className = "btn";
+  button.textContent = "Satellit";
+  button.style.cssText = "position:absolute;z-index:620;top:10px;right:10px;";
+  wrap.appendChild(button);
+  button.onclick = () => {
+    if (satLayer) {
+      map.removeLayer(satLayer);
+      satLayer = null;
+      button.textContent = "Satellit";
+      button.classList.remove("primary");
+      return;
+    }
+    satLayer = L.tileLayer(SAT, { maxZoom: 19, opacity: 1 }).addTo(map);
+    button.textContent = "Normal";
+    button.classList.add("primary");
+  };
 }
-const wait = setInterval(() => { if (window.__gmMap && window.L) { clearInterval(wait); boot(); } }, 200);
+const wait = setInterval(() => {
+  if (window.__gmMap && window.L) {
+    clearInterval(wait);
+    boot();
+  }
+}, 200);
