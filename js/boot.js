@@ -9,9 +9,10 @@ const setCloud = (text) => {
 setCloud(cloudLabel());
 
 const orig = localStorage.setItem.bind(localStorage);
+let pushing = false;
 localStorage.setItem = (key, value) => {
   orig(key, value);
-  if (key !== KEY) return;
+  if (key !== KEY || pushing) return;
   clearTimeout(window.__gmPush);
   window.__gmPush = setTimeout(() => {
     let state;
@@ -21,29 +22,36 @@ localStorage.setItem = (key, value) => {
       return;
     }
     setCloud("Speichert …");
-    pushCloud(state).then((res) => setCloud(res.label)).catch((err) => setCloud(err.message || "Sync fehlgeschlagen"));
-  }, 500);
+    pushing = true;
+    pushCloud(state)
+      .then((res) => setCloud(res.label))
+      .catch((err) => setCloud(err.message || "Sync fehlgeschlagen"))
+      .finally(() => {
+        pushing = false;
+      });
+  }, 700);
 };
 
 pullCloud()
   .then(async (remote) => {
     if (!remote) return;
-    if (remote.territories.length) {
-      const current = JSON.parse(localStorage.getItem(KEY) || "{}");
-      const next = {
-        ...current,
-        territories: remote.territories,
-        visits: remote.visits,
-      };
-      orig(KEY, JSON.stringify(next));
-      setCloud(`Supabase · ${remote.territories.length} Gebiete`);
-      location.reload();
-      return;
-    }
-    const local = localStorage.getItem(KEY);
-    if (local) {
+    if (!remote.territories.length) {
+      const local = localStorage.getItem(KEY);
+      if (!local) return;
       await pushCloud(JSON.parse(local));
       setCloud("Supabase · lokal hochgeladen");
+      return;
     }
+    const current = JSON.parse(localStorage.getItem(KEY) || "{}");
+    const same = JSON.stringify(current.territories || []) === JSON.stringify(remote.territories)
+      && JSON.stringify(current.visits || []) === JSON.stringify(remote.visits);
+    if (same) {
+      setCloud(`Supabase · ${remote.territories.length} Gebiete`);
+      return;
+    }
+    pushing = true;
+    orig(KEY, JSON.stringify({ ...current, territories: remote.territories, visits: remote.visits }));
+    pushing = false;
+    setCloud(`Supabase · ${remote.territories.length} Gebiete`);
   })
   .catch((err) => setCloud(err.message || "Supabase nicht erreichbar, lokal aktiv"));
