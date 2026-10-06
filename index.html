@@ -73,6 +73,7 @@
   <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
   <script>L.map = (function (orig) { return function () { const map = orig.apply(this, arguments); window.__gmMap = map; return map; }; })(L.map);</script>
   <script src="js/strip-team.js"></script>
+  <script src="js/purge-demo.js"></script>
   <script type="module" src="js/boot.js"></script>
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/snap.js"></script>
