@@ -1,19 +1,17 @@
-const CARTO_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfYTY2dTU1cnMiLCJqdGkiOiJhYWFlOTExMTQyOWFmNTU4MTdlOGUxZGMxODYwYjRmZiJ9.TYAmCxDAUDhKaIV0XT5afh_4vKnWoZ8nbskoX7nkEWg";
-const STREET = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=" + CARTO_KEY;
+const STREET = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 let satLayer = null;
 
 function boot() {
   const map = window.__gmMap;
   if (!map || !window.L) return;
-  map.setMaxZoom(20);
+  map.setMaxZoom(19);
   map.eachLayer((layer) => {
     if (layer instanceof L.TileLayer) map.removeLayer(layer);
   });
   L.tileLayer(STREET, {
-    maxZoom: 20,
-    subdomains: "abcd",
-    attribution: "&copy; OpenStreetMap, &copy; CARTO",
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap",
   }).addTo(map);
   const wrap = document.querySelector(".map-wrap");
   if (!wrap || document.getElementById("sat-toggle")) return;
@@ -32,7 +30,7 @@ function boot() {
       button.classList.remove("primary");
       return;
     }
-    satLayer = L.tileLayer(SAT, { maxZoom: 19, opacity: 1 }).addTo(map);
+    satLayer = L.tileLayer(SAT, { maxZoom: 19 }).addTo(map);
     button.textContent = "Normal";
     button.classList.add("primary");
   };
