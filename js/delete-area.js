@@ -2,6 +2,7 @@ import { SUPABASE_SECRET_KEY, SUPABASE_URL, supabaseConfigured } from "./config.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const KEY = "gm.v3";
+const TOMB = "gm.deleted";
 const cloud = supabaseConfigured()
   ? createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -11,6 +12,22 @@ const cloud = supabaseConfigured()
 
 function selectedId() {
   return document.querySelector("#list .card.active")?.dataset.id || null;
+}
+function tombstones() {
+  try {
+    return JSON.parse(localStorage.getItem(TOMB) || "[]");
+  } catch {
+    return [];
+  }
+}
+function remember(id) {
+  const ids = new Set(tombstones());
+  ids.add(id);
+  localStorage.setItem(TOMB, JSON.stringify([...ids]));
+}
+async function drop(table, column, id) {
+  const { error } = await cloud.from(table).delete().eq(column, id);
+  if (error) throw new Error(error.message);
 }
 
 function ensureButton() {
@@ -35,14 +52,15 @@ async function removeArea(id) {
   const area = (state.territories || []).find((t) => t.id === id);
   const name = area?.name || "dieses Gebiet";
   if (!confirm(`${name} wirklich löschen? Gebäude und Besuche darin gehen mit.`)) return;
+  remember(id);
   state.territories = (state.territories || []).filter((t) => t.id !== id);
   state.visits = (state.visits || []).filter((v) => v.territory_id !== id);
   localStorage.setItem(KEY, JSON.stringify(state));
   if (cloud) {
-    await cloud.from("gm_visits").delete().eq("territory_id", id);
-    await cloud.from("gm_doors").delete().eq("territory_id", id);
-    await cloud.from("gm_territory_members").delete().eq("territory_id", id);
-    await cloud.from("gm_territories").delete().eq("id", id);
+    await drop("gm_visits", "territory_id", id);
+    await drop("gm_doors", "territory_id", id);
+    await drop("gm_territory_members", "territory_id", id);
+    await drop("gm_territories", "id", id);
   }
   location.reload();
 }
@@ -52,7 +70,7 @@ document.getElementById("detail")?.addEventListener("click", (event) => {
   if (!button) return;
   event.preventDefault();
   event.stopPropagation();
-  removeArea(button.dataset.deleteArea);
+  removeArea(button.dataset.deleteArea).catch((err) => alert(err.message || "Löschen in Supabase fehlgeschlagen"));
 });
 
 new MutationObserver(ensureButton).observe(document.getElementById("detail") || document.body, { childList: true, subtree: true });

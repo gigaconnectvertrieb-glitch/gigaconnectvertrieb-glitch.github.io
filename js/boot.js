@@ -1,10 +1,18 @@
 import { cloudLabel, pullCloud, pushCloud } from "./remote.js";
 
 const KEY = "gm.v3";
+const TOMB = "gm.deleted";
 const el = document.getElementById("cloud");
 const setCloud = (text) => {
   if (el) el.textContent = text;
 };
+function tombstones() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(TOMB) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
 
 setCloud(cloudLabel());
 
@@ -35,6 +43,9 @@ localStorage.setItem = (key, value) => {
 pullCloud()
   .then(async (remote) => {
     if (!remote) return;
+    const gone = tombstones();
+    remote.territories = (remote.territories || []).filter((t) => !gone.has(t.id));
+    remote.visits = (remote.visits || []).filter((v) => !gone.has(v.territory_id));
     if (!remote.territories.length) {
       const local = localStorage.getItem(KEY);
       if (!local) return;
