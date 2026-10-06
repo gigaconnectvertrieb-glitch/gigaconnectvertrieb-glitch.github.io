@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gebietsmanager</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/app.css?v=19" />
-  <link rel="stylesheet" href="css/mobile.css?v=19" />
+  <link rel="stylesheet" href="css/app.css?v=20" />
+  <link rel="stylesheet" href="css/mobile.css?v=20" />
 </head>
 <body>
   <div class="app">
@@ -17,21 +17,22 @@
   </div>
   <div class="modal" id="modal"><form class="dialog" id="dialog"></form></div>
   <input type="file" id="file" accept=".geojson,.json,.csv" hidden />
-  <script src="js/wipe-berlin.js?v=19"></script>
+  <script src="js/wipe-berlin.js?v=20"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>L.map = (function (orig) { return function () { const map = orig.apply(this, arguments); window.__gmMap = map; return map; }; })(L.map);</script>
-  <script src="js/no-demo.js?v=19"></script>
-  <script type="module" src="js/boot.js?v=19"></script>
-  <script type="module" src="js/app.js?v=19"></script>
-  <script type="module" src="js/snap.js?v=19"></script>
-  <script type="module" src="js/delete-area.js?v=19"></script>
-  <script type="module" src="js/route.js?v=19"></script>
-  <script type="module" src="js/google3d.js?v=19"></script>
-  <script src="js/map3d.js?v=19"></script>
-  <script src="js/field-run.js?v=19"></script>
-  <script src="js/points.js?v=19"></script>
-  <script src="js/classify.js?v=19"></script>
-  <script src="js/gemini-type.js?v=19"></script>
-  <script src="js/search-place.js?v=19"></script>
+  <script src="js/login.js?v=20"></script>
+  <script src="js/no-demo.js?v=20"></script>
+  <script type="module" src="js/boot.js?v=20"></script>
+  <script type="module" src="js/app.js?v=20"></script>
+  <script type="module" src="js/snap.js?v=20"></script>
+  <script type="module" src="js/delete-area.js?v=20"></script>
+  <script type="module" src="js/route.js?v=20"></script>
+  <script type="module" src="js/google3d.js?v=20"></script>
+  <script src="js/map3d.js?v=20"></script>
+  <script src="js/field-run.js?v=20"></script>
+  <script src="js/points.js?v=20"></script>
+  <script src="js/classify.js?v=20"></script>
+  <script src="js/gemini-type.js?v=20"></script>
+  <script src="js/search-place.js?v=20"></script>
 </body>
 </html>
