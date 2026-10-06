@@ -1,17 +1,11 @@
 const KEY = "gm.v3";
 const REP = "gm.rep";
-
 function read() {
   try { return JSON.parse(localStorage.getItem(KEY) || localStorage.getItem("gm.v2") || "{}"); }
   catch { return {}; }
 }
-function write(state) {
-  localStorage.setItem(KEY, JSON.stringify(state));
-}
-function num(house) {
-  const n = parseInt(String(house || "").replace(/\D/g, ""), 10);
-  return Number.isFinite(n) ? n : 0;
-}
+function write(state) { localStorage.setItem(KEY, JSON.stringify(state)); }
+function num(house) { const n = parseInt(String(house || "").replace(/\D/g, ""), 10); return Number.isFinite(n) ? n : 0; }
 function side(house) { return num(house) % 2; }
 function label(d) { return `${d.street || "Ohne Straße"} ${d.house || "?"}`; }
 function selected() {
@@ -20,12 +14,11 @@ function selected() {
 }
 function order(doors, start) {
   const open = (doors || []).filter((d) => d.status !== "erledigt" && d.status !== "abschluss");
-  if (!start) return open.slice().sort((a, b) => a.street.localeCompare(b.street, "de") || num(a.house) - num(b.house));
+  if (!start) return open.slice().sort((a, b) => String(a.street).localeCompare(String(b.street), "de") || num(a.house) - num(b.house));
   const same = open.filter((d) => d.street === start.street && side(d.house) === side(start.house) && d.id !== start.id);
-  const up = num(start.house);
-  same.sort((a, b) => Math.abs(num(a.house) - up) - Math.abs(num(b.house) - up));
+  same.sort((a, b) => Math.abs(num(a.house) - num(start.house)) - Math.abs(num(b.house) - num(start.house)));
   const rest = open.filter((d) => d.id !== start.id && !same.includes(d));
-  rest.sort((a, b) => a.street.localeCompare(b.street, "de") || num(a.house) - num(b.house));
+  rest.sort((a, b) => String(a.street).localeCompare(String(b.street), "de") || num(a.house) - num(b.house));
   return [start, ...same, ...rest];
 }
 function rep() {
@@ -43,21 +36,7 @@ function mark(door, status) {
   const target = area.doors.find((d) => d.id === door.id);
   target.status = status;
   state.visits = state.visits || [];
-  state.visits.push({
-    id: `vis-${Date.now()}`,
-    door_id: door.id,
-    territory_id: area.id,
-    user_id: rep(),
-    reason: status,
-    note: "",
-    street: door.street,
-    house: door.house,
-    zip: door.zip,
-    city: door.city,
-    follow_up_on: status === "nachlauf" ? new Date(Date.now() + 86400000).toISOString().slice(0, 10) : null,
-    week_key: "",
-    list_status: status === "abschluss" || status === "erledigt" ? "erledigt" : "offen",
-  });
+  state.visits.push({ id: `vis-${Date.now()}`, door_id: door.id, territory_id: area.id, user_id: rep(), reason: status, note: "", street: door.street, house: door.house, zip: door.zip, city: door.city, follow_up_on: status === "nachlauf" ? new Date(Date.now() + 86400000).toISOString().slice(0, 10) : null, week_key: "", list_status: status === "abschluss" || status === "erledigt" ? "erledigt" : "offen" });
   write(state);
   draw();
 }
@@ -65,28 +44,13 @@ function draw() {
   const dock = document.getElementById("field-dock");
   if (!dock) return;
   const area = selected();
-  if (!area) {
-    dock.innerHTML = "<b>Lauf</b><span>Gebiet wählen</span>";
-    return;
-  }
+  if (!area) { dock.innerHTML = "<b>Lauf</b><span>Gebiet wählen</span>"; return; }
   const route = order(area.doors, area.doors?.[0]);
   const now = route[0];
   const next = route[1];
-  if (!now) {
-    dock.innerHTML = "<b>Lauf fertig</b><span>Keine offenen Häuser</span>";
-    return;
-  }
-  dock.innerHTML = `<div><small>Jetzt · ${now.kind === "mfh" ? "Mehrfamilie" : "Einfamilie"}</small><b>${label(now)}</b><span>Danach ${next ? label(next) : "Ende"}</span></div>
-    <div class="field-actions">
-      <button type="button" data-st="nicht_angetroffen">Nicht da</button>
-      <button type="button" data-st="kein_interesse">Kein Interesse</button>
-      <button type="button" data-st="nachlauf">Nachlauf</button>
-      <button type="button" data-st="abschluss">Abschluss</button>
-    </div>`;
-  dock.querySelectorAll("button").forEach((button) => {
-    button.onclick = () => mark(now, button.dataset.st);
-  });
-  window.__gmMap?.panTo?.([now.lat, now.lng]);
+  if (!now) { dock.innerHTML = "<b>Lauf fertig</b><span>Keine offenen Häuser</span>"; return; }
+  dock.innerHTML = `<div><small>Jetzt · ${now.kind === "mfh" ? "Mehrfamilie" : "Einfamilie"}</small><b>${label(now)}</b><span>Danach ${next ? label(next) : "Ende"}</span></div><div class="field-actions"><button type="button" data-st="nicht_angetroffen">Nicht da</button><button type="button" data-st="kein_interesse">Kein Interesse</button><button type="button" data-st="nachlauf">Nachlauf</button><button type="button" data-st="abschluss">Abschluss</button></div>`;
+  dock.querySelectorAll("button").forEach((button) => { button.onclick = () => mark(now, button.dataset.st); });
 }
 function boot() {
   if (document.getElementById("field-dock")) return;
