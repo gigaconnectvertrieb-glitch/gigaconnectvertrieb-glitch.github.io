@@ -1,4 +1,4 @@
-@media (max-width: 800px) {
+@media (max-width: 1180px) {
   html, body { height: auto; min-height: 100%; overflow: auto; }
   .app {
     display: flex;
@@ -12,33 +12,40 @@
     z-index: 800;
     flex-wrap: wrap;
     height: auto;
-    padding: 10px 12px calc(10px + env(safe-area-inset-top));
+    padding: 10px 12px;
     gap: 8px;
   }
   .brand { min-width: 0; }
   .stats { display: none; }
   .cloud { max-width: none; text-align: left; }
-  .top-actions { width: 100%; }
+  .top-actions { width: 100%; display: flex; }
   .top-actions .btn { flex: 1; padding: 10px 8px; }
   .side, .detail {
     max-height: none;
     border: 0;
     border-top: 1px solid var(--line);
+    order: 3;
   }
   .map-wrap {
     position: relative;
-    height: 42dvh;
-    min-height: 240px;
-    max-height: 420px;
+    order: 2;
+    height: 48dvh;
+    min-height: 280px;
+    max-height: 520px;
     flex: none;
     z-index: 1;
   }
   #map, .leaflet-container {
-    height: 42dvh !important;
-    min-height: 240px;
-    max-height: 420px;
+    height: 48dvh !important;
+    min-height: 280px;
+    max-height: 520px;
     width: 100%;
   }
-  .plan-bar { left: 8px; right: 8px; bottom: 8px; }
+  .plan-bar {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 700;
+  }
   .detail-body, .side { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }

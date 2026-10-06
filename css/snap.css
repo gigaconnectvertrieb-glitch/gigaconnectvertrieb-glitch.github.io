@@ -1,0 +1,11 @@
+.leaflet-tooltip.plan-tip {
+  background: #062216;
+  color: #fff;
+  border: 0;
+  border-radius: 99px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: none;
+}
+.leaflet-tooltip.plan-tip::before { display: none; }
