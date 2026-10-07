@@ -29,3 +29,6 @@ aside { padding:12px; display:flex; flex-direction:column; min-height:0; }
 #walk li { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
 #walk button { min-height:36px; }
 @media (max-width:900px) { main { grid-template-columns:1fr; } #map { min-height:62dvh; } }
+
+#walk li.done span { text-decoration: line-through; color: var(--muted); }
+#walk input { min-height: 36px; width: 100%; }
