@@ -101,6 +101,19 @@ async function save() {
   setStatus("Laufliste gespeichert");
   loadSaved();
 }
+async function removeList() {
+  const id = $("saved").value;
+  if (!id) return setStatus("Zuerst eine gespeicherte Liste wählen.");
+  await rest(`gm_doors?territory_id=eq.${id}`, { method: "DELETE" });
+  await rest(`gm_territory_members?territory_id=eq.${id}`, { method: "DELETE" });
+  await rest(`gm_territories?id=eq.${id}`, { method: "DELETE" });
+  doors = [];
+  points = [];
+  draw();
+  renderWalk();
+  setStatus("Laufliste gelöscht");
+  loadSaved();
+}
 async function loadSaved() {
   const rows = await rest("gm_territories?select=id,name&order=updated_at.desc").catch(() => []);
   $("saved").innerHTML = `<option value="">Gespeicherte Liste</option>` + rows.map((r) => `<option value="${r.id}">${r.name}</option>`).join("");
@@ -131,6 +144,7 @@ async function boot() {
   $("clear").onclick = () => { points = []; doors = []; draw(); renderWalk(); setStatus("Markierung gelöscht"); };
   $("read").onclick = () => readHouses();
   $("save").onclick = () => save().catch((err) => setStatus(err.message || "Speichern fehlgeschlagen"));
+  $("remove").onclick = () => removeList().catch((err) => setStatus(err.message || "Löschen fehlgeschlagen"));
   $("saved").onchange = (e) => openSaved(e.target.value);
   $("walk").onclick = (e) => {
     const btn = e.target.closest("button");
