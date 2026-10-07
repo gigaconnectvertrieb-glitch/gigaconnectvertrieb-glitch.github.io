@@ -82,6 +82,7 @@ async function readHouses() {
         const house = parts.find((p) => p.types.includes("street_number"))?.long_name;
         const street = parts.find((p) => p.types.includes("route"))?.long_name;
         if (!house || !street || found.some((d) => d.street === street && d.house === house)) continue;
+        if (!inside({ lat: result.geometry.location.lat, lng: result.geometry.location.lng }, points)) continue;
         found.push({ street, house, lat: result.geometry.location.lat, lng: result.geometry.location.lng, status: "offen" });
       }
     }
