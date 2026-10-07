@@ -1,0 +1,31 @@
+:root { color-scheme: dark; --bg:#0c0d10; --card:#16181d; --line:#2a2d34; --text:#f4f1ea; --muted:#a7a29a; --gold:#d6b15e; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 system-ui, sans-serif; }
+.hidden { display:none !important; }
+.login { min-height:100dvh; display:grid; place-items:center; padding:24px; }
+.login form, .tools, aside { background:var(--card); border:1px solid var(--line); border-radius:24px; }
+.login form { width:min(420px,100%); padding:28px; display:grid; gap:12px; }
+.mark { width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background:var(--gold); color:#111; font-weight:700; }
+h1 { margin:8px 0 0; font-size:32px; }
+label { display:grid; gap:6px; color:var(--muted); font-size:13px; }
+input, select, button { min-height:46px; border-radius:999px; border:1px solid var(--line); background:#0d0e12; color:var(--text); padding:0 14px; font:inherit; }
+button { cursor:pointer; }
+button.gold, .login button { background:var(--gold); color:#111; border-color:transparent; font-weight:650; }
+.error { color:#ffb4b4; min-height:1.2em; }
+.app { min-height:100dvh; display:grid; grid-template-rows:auto auto 1fr; }
+header, .tools, .aside-head, .who { display:flex; align-items:center; gap:12px; }
+header { justify-content:space-between; padding:14px 16px; }
+.brand, .who { display:flex; align-items:center; gap:10px; }
+.brand small, .muted { color:var(--muted); }
+.tools { margin:0 16px 12px; padding:12px; display:grid; gap:10px; }
+.row { display:flex; flex-wrap:wrap; gap:8px; }
+.row > * { flex:1; }
+#status { margin:0; color:var(--muted); }
+main { display:grid; grid-template-columns:1.4fr .8fr; gap:12px; padding:0 16px 16px; min-height:0; }
+#map { min-height:520px; border-radius:24px; overflow:hidden; border:1px solid var(--line); }
+aside { padding:12px; display:flex; flex-direction:column; min-height:0; }
+.aside-head { justify-content:space-between; margin-bottom:8px; }
+#walk { list-style:none; margin:0; padding:0; overflow:auto; }
+#walk li { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
+#walk button { min-height:36px; }
+@media (max-width:900px) { main { grid-template-columns:1fr; } #map { min-height:62dvh; } }
