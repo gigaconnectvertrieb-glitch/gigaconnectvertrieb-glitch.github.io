@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>E1 Laufliste</title>
+  <link rel="stylesheet" href="css/laufliste.css?v=1" />
+</head>
+<body>
+  <div id="login" class="login">
+    <form id="login-form">
+      <div class="mark">E1</div>
+      <h1>Laufliste</h1>
+      <p>Orhan und Luca. Gebiet markieren, Häuser lesen, Lauf speichern.</p>
+      <label>Benutzer<input name="name" autocomplete="username" required /></label>
+      <label>Passwort<input name="pin" type="password" autocomplete="current-password" required /></label>
+      <button type="submit">Start</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+  <div id="app" class="app hidden">
+    <header>
+      <div class="brand"><span class="mark">E1</span><div><b>Laufliste</b><small>e1direktvertrieb.de</small></div></div>
+      <div class="who"><span id="who"></span><button id="logout" type="button">Abmelden</button></div>
+    </header>
+    <section class="tools">
+      <input id="search" placeholder="Straße oder Ort, z. B. Im Taubhaus Rödermark" />
+      <div class="row">
+        <button id="undo" type="button">Punkt zurück</button>
+        <button id="clear" type="button">Markierung löschen</button>
+        <button id="read" class="gold" type="button">Häuser lesen</button>
+      </div>
+      <p id="status">Bereich auf der Karte markieren.</p>
+      <div class="row">
+        <input id="name" placeholder="Name der Laufliste" />
+        <select id="owner"><option value="orhan">Orhan</option><option value="luca">Luca</option></select>
+        <button id="save" class="gold" type="button">Speichern</button>
+      </div>
+    </section>
+    <main>
+      <div id="map"></div>
+      <aside>
+        <div class="aside-head">
+          <b>Lauf</b>
+          <select id="saved"><option value="">Gespeicherte Liste</option></select>
+        </div>
+        <ol id="walk"></ol>
+      </aside>
+    </main>
+  </div>
+  <script src="js/laufliste.js?v=1" type="module"></script>
+</body>
+</html>
