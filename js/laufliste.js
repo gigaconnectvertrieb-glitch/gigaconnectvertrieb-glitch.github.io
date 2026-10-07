@@ -47,7 +47,7 @@ function order(list) {
   return out;
 }
 function renderWalk() {
-  $("walk").innerHTML = doors.map((d, i) => `<li class="${d.status === "erledigt" ? "done" : ""}"><b>${i + 1}</b><div><span>${d.street} ${d.house}</span><input data-note="${i}" value="${(d.note || "").replace(/"/g, """)}" placeholder="Notiz" /></div><button data-i="${i}" type="button">${d.status === "erledigt" ? "abgearbeitet" : d.status || "offen"}</button></li>`).join("");
+  $("walk").innerHTML = doors.map((d, i) => `<li class="${d.status === "erledigt" ? "done" : ""}"><b>${i + 1}</b><div><span>${d.street} ${d.house}</span><input data-note="${i}" value="${(d.note || "").replace(/"/g, "&quot;")}" placeholder="Notiz" /></div><button data-i="${i}" type="button">${d.status === "erledigt" ? "abgearbeitet" : d.status || "offen"}</button></li>`).join("");
 }
 async function rest(path, options = {}) {
   const res = await fetch(`${URL}/rest/v1/${path}`, {
@@ -135,7 +135,7 @@ async function boot() {
   $("app").classList.remove("hidden");
   $("who").textContent = me.name;
   $("owner").value = me.id;
-  await loadGoogle();
+  try { await loadGoogle(); } catch { return setStatus("Google Maps konnte nicht geladen werden."); }
   map = new google.maps.Map($("map"), { center: { lat: 49.972, lng: 8.787 }, zoom: 16, mapTypeControl: true, streetViewControl: false });
   map.addListener("click", (e) => { points.push({ lat: e.latLng.lat(), lng: e.latLng.lng() }); draw(); setStatus(`${points.length} Punkte`); });
   const ac = new google.maps.places.Autocomplete($("search"), { componentRestrictions: { country: "de" } });
@@ -167,6 +167,6 @@ $("login-form").onsubmit = (e) => {
   const user = USERS.find((u) => u.id === String(data.get("name")).trim().toLowerCase() && u.pin === data.get("pin"));
   if (!user) return ($("login-error").textContent = "Benutzer oder Passwort falsch");
   localStorage.setItem(SESSION, JSON.stringify(user));
-  boot();
+  boot().catch((err) => setStatus(err.message || "Start fehlgeschlagen"));
 };
-if (session()) boot();
+if (session()) boot().catch((err) => setStatus(err.message || "Start fehlgeschlagen"));
