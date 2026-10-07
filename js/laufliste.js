@@ -47,7 +47,7 @@ function order(list) {
   return out;
 }
 function renderWalk() {
-  $("walk").innerHTML = doors.map((d, i) => `<li><b>${i + 1}</b><span>${d.street} ${d.house}</span><button data-i="${i}" type="button">${d.status || "offen"}</button></li>`).join("");
+  $("walk").innerHTML = doors.map((d, i) => `<li class="${d.status === "erledigt" ? "done" : ""}"><b>${i + 1}</b><div><span>${d.street} ${d.house}</span><input data-note="${i}" value="${(d.note || "").replace(/"/g, """)}" placeholder="Notiz" /></div><button data-i="${i}" type="button">${d.status === "erledigt" ? "abgearbeitet" : d.status || "offen"}</button></li>`).join("");
 }
 async function rest(path, options = {}) {
   const res = await fetch(`${URL}/rest/v1/${path}`, {
@@ -96,7 +96,7 @@ async function save() {
   const id = crypto.randomUUID();
   const name = $("name").value.trim() || doors[0].street || "Laufliste";
   await rest("gm_territories", { method: "POST", body: JSON.stringify({ id, name, center: points[0], polygon: points }) });
-  await rest("gm_doors", { method: "POST", body: JSON.stringify(doors.map((d, i) => ({ id: crypto.randomUUID(), territory_id: id, street: d.street, house: d.house, lat: d.lat, lng: d.lng, status: d.status || "offen", sort_order: i + 1, note: `Halt ${String(i + 1).padStart(3, "0")}` }))) });
+  await rest("gm_doors", { method: "POST", body: JSON.stringify(doors.map((d, i) => ({ id: crypto.randomUUID(), territory_id: id, street: d.street, house: d.house, lat: d.lat, lng: d.lng, status: d.status || "offen", sort_order: i + 1, note: d.note || "" }))) });
   await rest("gm_territory_members", { method: "POST", body: JSON.stringify({ territory_id: id, user_id: $("owner").value }) });
   setStatus("Laufliste gespeichert");
   loadSaved();
@@ -107,7 +107,7 @@ async function loadSaved() {
 }
 async function openSaved(id) {
   if (!id) return;
-  const rows = await rest(`gm_doors?territory_id=eq.${id}&select=street,house,lat,lng,status,sort_order&order=sort_order`);
+  const rows = await rest(`gm_doors?territory_id=eq.${id}&select=id,street,house,lat,lng,status,note,sort_order&order=sort_order`);
   doors = rows;
   points = [];
   draw();
@@ -136,8 +136,13 @@ async function boot() {
     const btn = e.target.closest("button");
     if (!btn) return;
     const d = doors[Number(btn.dataset.i)];
-    d.status = d.status === "offen" ? "erledigt" : d.status === "erledigt" ? "nicht da" : "offen";
+    d.status = d.status === "erledigt" ? "offen" : "erledigt";
     renderWalk();
+  };
+  $("walk").onchange = (e) => {
+    const input = e.target.closest("input");
+    if (!input) return;
+    doors[Number(input.dataset.note)].note = input.value;
   };
   $("logout").onclick = () => { localStorage.removeItem(SESSION); location.reload(); };
   loadSaved();
