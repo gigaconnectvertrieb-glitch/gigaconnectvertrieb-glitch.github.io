@@ -39,9 +39,9 @@ export const PHRASES: { title: string; items: string[] }[] = [
   {
     title: "Bedarf",
     items: [
-      "Welchen Anbieter haben Sie aktuell für Strom, Internet oder Handy?",
+      "Welchen Anbieter haben Sie aktuell für Strom oder Gas?",
       "Wie viel zahlen Sie im Monat dafür?",
-      "Sind Sie mit Ihrer Internetgeschwindigkeit zufrieden?",
+      "Wann wurde Ihr Tarif zuletzt geprüft oder gewechselt?",
       "Wie viele Personen leben in Ihrem Haushalt?",
     ],
   },
