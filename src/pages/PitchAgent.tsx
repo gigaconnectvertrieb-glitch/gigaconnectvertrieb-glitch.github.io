@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PhoneOff, Phone } from "lucide-react";
 import toast from "react-hot-toast";
 import { LANGS, translate } from "@/lib/pitch";
-import { startAgent, type AgentSession } from "@/lib/geminiLive";
+import { startAgent, type AgentLine, type AgentSession } from "@/lib/geminiLive";
 
 interface Line {
   id: string;
@@ -25,9 +25,14 @@ export default function PitchAgent() {
 
   useEffect(() => () => session.current?.stop(), []);
 
-  const addLine = (l: Line) => {
-    setLines((cur) => (cur.some((c) => c.id === l.id) ? cur : [...cur, l]));
+  const addLine = (l: AgentLine) => {
+    setLines((cur) =>
+      cur.some((c) => c.id === l.id)
+        ? cur.map((c) => (c.id === l.id ? { ...c, text: l.text } : c))
+        : [...cur, { id: l.id, from: l.from, text: l.text }]
+    );
     setTimeout(() => bottom.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    if (!l.final) return;
     translate(l.text, lang.code, "de")
       .then((de) => setLines((cur) => cur.map((c) => (c.id === l.id ? { ...c, de } : c))))
       .catch(() => undefined);

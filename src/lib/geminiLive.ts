@@ -10,6 +10,7 @@ export interface AgentLine {
   id: string;
   from: "kunde" | "agent";
   text: string;
+  final?: boolean;
 }
 
 export interface AgentHandlers {
@@ -81,19 +82,22 @@ export async function startAgent(
   let inBuf = "";
   let outBuf = "";
 
-  const flush = () => {
-    if (inBuf.trim()) h.onLine({ id: crypto.randomUUID(), from: "kunde", text: inBuf.trim() });
-    if (outBuf.trim()) h.onLine({ id: crypto.randomUUID(), from: "agent", text: outBuf.trim() });
-    inBuf = "";
-    outBuf = "";
-  };
+  let inId = crypto.randomUUID();
+  let outId = crypto.randomUUID();
+
   const flushIn = () => {
-    if (inBuf.trim()) h.onLine({ id: crypto.randomUUID(), from: "kunde", text: inBuf.trim() });
+    if (inBuf.trim()) h.onLine({ id: inId, from: "kunde", text: inBuf.trim(), final: true });
     inBuf = "";
+    inId = crypto.randomUUID();
   };
   const flushOut = () => {
-    if (outBuf.trim()) h.onLine({ id: crypto.randomUUID(), from: "agent", text: outBuf.trim() });
+    if (outBuf.trim()) h.onLine({ id: outId, from: "agent", text: outBuf.trim(), final: true });
     outBuf = "";
+    outId = crypto.randomUUID();
+  };
+  const flush = () => {
+    flushIn();
+    flushOut();
   };
 
   const stopPlayback = () => {
@@ -184,6 +188,7 @@ export async function startAgent(
         inputTranscription?: { text?: string };
         outputTranscription?: { text?: string };
         turnComplete?: boolean;
+        generationComplete?: boolean;
         interrupted?: boolean;
       };
     };
@@ -202,11 +207,14 @@ export async function startAgent(
     if (sc.inputTranscription?.text) {
       flushOut();
       inBuf += sc.inputTranscription.text;
+      h.onLine({ id: inId, from: "kunde", text: inBuf.trim() });
     }
     if (sc.outputTranscription?.text) {
       flushIn();
       outBuf += sc.outputTranscription.text;
+      h.onLine({ id: outId, from: "agent", text: outBuf.trim() });
     }
+    if (sc.generationComplete) flushOut();
     sc.modelTurn?.parts?.forEach((p) => {
       if (p.inlineData?.data) {
         h.onState("speaking");
