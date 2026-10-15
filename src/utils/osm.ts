@@ -40,7 +40,6 @@ const MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://lz4.overpass-api.de/api/interpreter",
   "https://z.overpass-api.de/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
@@ -221,7 +220,7 @@ export async function fetchHouseNumbers(
   onProgress?: (done: number, total: number) => void
 ): Promise<FoundAddress[]> {
   const result = new Map<string, FoundAddress>();
-  const chunkSize = 25;
+  const chunkSize = 80;
   let done = 0;
 
   for (let i = 0; i < streets.length; i += chunkSize) {
