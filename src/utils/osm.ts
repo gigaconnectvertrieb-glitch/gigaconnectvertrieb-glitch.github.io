@@ -1,3 +1,5 @@
+import { sharedGet, sharedPut } from "@/lib/sharedCache";
+
 export interface CitySuggestion {
   name: string;
   hint: string;
@@ -205,6 +207,13 @@ export async function fetchCityStreets(city: string): Promise<string[]> {
   const cached = readCache(city.trim());
   if (cached?.length) return cached;
 
+  const sKey = `streets|${city.trim().toLowerCase()}`;
+  const shared = (await sharedGet<string[]>([sKey]))[sKey];
+  if (shared?.length) {
+    writeCache(city.trim(), shared);
+    return shared;
+  }
+
   for (const clause of await areaClauses(city.trim())) {
     try {
       const data = await overpass(
@@ -220,6 +229,7 @@ export async function fetchCityStreets(city: string): Promise<string[]> {
       if (names.size > 0) {
         const sorted = [...names].sort((a, b) => a.localeCompare(b, "de"));
         writeCache(city.trim(), sorted);
+        sharedPut([{ key: sKey, data: sorted }]);
         return sorted;
       }
     } catch (err) {
@@ -267,6 +277,17 @@ export async function fetchHouseNumbers(
 
   const houseCache = readJson<FoundAddress[]>(HOUSE_CACHE);
   const cityKey = city.trim().toLowerCase();
+  const missing = streets.filter((s) => !houseCache[`${cityKey}|${s}`]?.length);
+  if (missing.length) {
+    const remote = await sharedGet<FoundAddress[]>(
+      missing.map((s) => `houses|${cityKey}|${s}`)
+    );
+    for (const s of missing) {
+      const hit = remote[`houses|${cityKey}|${s}`];
+      if (hit?.length) houseCache[`${cityKey}|${s}`] = hit;
+    }
+    writeJson(HOUSE_CACHE, houseCache);
+  }
   const todo: string[] = [];
   for (const street of streets) {
     const hit = houseCache[`${cityKey}|${street}`];
@@ -318,11 +339,16 @@ export async function fetchHouseNumbers(
     if (!reached && lastError) throw lastError;
 
     if (gotElements) {
+      const upload: { key: string; data: unknown }[] = [];
       for (const street of chunk) {
         const found = [...result.values()].filter((a) => a.street === street);
-        if (found.length) houseCache[`${cityKey}|${street}`] = found;
+        if (found.length) {
+          houseCache[`${cityKey}|${street}`] = found;
+          upload.push({ key: `houses|${cityKey}|${street}`, data: found });
+        }
       }
       writeJson(HOUSE_CACHE, houseCache);
+      sharedPut(upload);
     }
     done += chunk.length;
     onProgress?.(done, streets.length);
