@@ -33,8 +33,8 @@ export async function searchStreets(
   city: string,
   query: string
 ): Promise<Array<{ street: string; city: string }>> {
-  const q = encodeURIComponent(`${query}, ${city}, Deutschland`);
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${q}&addressdetails=1&limit=15&countrycodes=de`;
+  const q = encodeURIComponent(`${query} ${city}`);
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${q}&addressdetails=1&limit=10&countrycodes=de`;
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
@@ -50,12 +50,12 @@ export async function searchStreets(
   for (const item of data) {
     const addr = item.address || {};
     const street = addr.road || addr.street || addr.pedestrian;
-    const c = addr.city || addr.town || addr.village;
+    const c = addr.city || addr.town || addr.village || city;
     if (!street) continue;
-    const key = `${(c || city).toLowerCase()}|${street.toLowerCase()}`;
+    const key = `${c.toLowerCase()}|${street.toLowerCase()}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    result.push({ street, city: c || city });
+    result.push({ street, city: c });
   }
   return result;
 }
@@ -64,8 +64,8 @@ export async function fetchStreetAddresses(
   street: string,
   city: string
 ): Promise<RawAddress[]> {
-  const q = encodeURIComponent(`${street}, ${city}, Deutschland`);
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${q}&addressdetails=1&limit=500&countrycodes=de&bounded=1`;
+  const q = encodeURIComponent(`${street} ${city}`);
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${q}&addressdetails=1&limit=1000&countrycodes=de`;
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
@@ -82,24 +82,47 @@ export async function fetchStreetAddresses(
     const addr = item.address || {};
     const s = addr.road || addr.street || addr.pedestrian;
     const h = addr.house_number;
-    if (s && h && item.lat && item.lon) {
-      const key = `${s.toLowerCase()}|${h.toLowerCase()}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      result.push({
-        street: s,
-        houseNumber: String(h),
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-      });
+    const c = addr.city || addr.town || addr.village;
+    if (!s || !h || !item.lat || !item.lon) continue;
+    if (city && c && c.toLowerCase() !== city.toLowerCase()) continue;
+    if (s.toLowerCase() !== street.toLowerCase()) continue;
+
+    const key = `${s.toLowerCase()}|${h.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push({
+      street: s,
+      houseNumber: String(h),
+      lat: parseFloat(item.lat),
+      lng: parseFloat(item.lon),
+    });
+  }
+
+  if (result.length === 0) {
+    for (const item of data) {
+      const addr = item.address || {};
+      const s = addr.road || addr.street || addr.pedestrian;
+      const h = addr.house_number;
+      if (s && h && item.lat && item.lon) {
+        const key = `${s.toLowerCase()}|${h.toLowerCase()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push({
+          street: s,
+          houseNumber: String(h),
+          lat: parseFloat(item.lat),
+          lng: parseFloat(item.lon),
+        });
+      }
     }
   }
+
   return sortByHouseNumber(result);
 }
 
 export async function fetchCityAddresses(city: string): Promise<RawAddress[]> {
-  const q = encodeURIComponent(`${city}, Deutschland`);
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${q}&addressdetails=1&limit=1000&countrycodes=de`;
+  const q = encodeURIComponent(city);
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${q}&addressdetails=1&limit=2000&countrycodes=de`;
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
@@ -114,7 +137,7 @@ export async function fetchCityAddresses(city: string): Promise<RawAddress[]> {
 
   for (const item of data) {
     const addr = item.address || {};
-    const s = addr.road || addr.street;
+    const s = addr.road || addr.street || addr.pedestrian;
     const h = addr.house_number;
     if (s && h && item.lat && item.lon) {
       const key = `${s.toLowerCase()}|${h.toLowerCase()}`;
