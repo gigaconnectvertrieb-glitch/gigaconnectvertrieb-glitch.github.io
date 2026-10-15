@@ -1,6 +1,6 @@
 import { KEY } from "@/lib/sync";
 
-const FN = "https://syjwagsgxwfiacbfkoyp.supabase.co/functions/v1/gemini-token";
+const FN = "https://syjwagsgxwfiacbfkoyp.supabase.co/functions/v1/smooth-worker";
 const MODEL = "models/gemini-3.8-live";
 const VOICE = "Kore";
 const WS =
