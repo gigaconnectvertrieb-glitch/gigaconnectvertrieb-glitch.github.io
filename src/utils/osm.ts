@@ -59,37 +59,69 @@ function areaClauses(city: string): string[] {
   ];
 }
 
-async function overpass(query: string, timeoutMs = 40000): Promise<OverpassResponse> {
-  let lastError = "";
-  for (const base of MIRRORS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(base, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        lastError = `Server antwortet mit ${res.status}`;
-        continue;
-      }
-      return (await res.json()) as OverpassResponse;
-    } catch (err) {
-      lastError =
-        err instanceof DOMException && err.name === "AbortError"
-          ? "Zeitüberschreitung"
-          : err instanceof Error
-            ? err.message
-            : "Netzwerkfehler";
-    } finally {
-      clearTimeout(timer);
-    }
+/** Fragt alle Server gleichzeitig ab, die erste gültige Antwort gewinnt. */
+async function overpass(query: string, timeoutMs = 45000): Promise<OverpassResponse> {
+  const controllers = MIRRORS.map(() => new AbortController());
+  const timer = setTimeout(() => controllers.forEach((c) => c.abort()), timeoutMs);
+  const body = `data=${encodeURIComponent(query)}`;
+
+  const attempts = MIRRORS.map(async (base, i) => {
+    const res = await fetch(base, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      signal: controllers[i].signal,
+    });
+    if (!res.ok) throw new Error(`Server antwortet mit ${res.status}`);
+    const json = (await res.json()) as OverpassResponse & { remark?: string };
+    if (json.remark && !(json.elements?.length)) throw new Error("Server überlastet");
+    controllers.forEach((c, j) => j !== i && c.abort());
+    return json;
+  });
+
+  try {
+    return await new Promise<OverpassResponse>((resolve, reject) => {
+      let failed = 0;
+      let firstError: unknown = null;
+      attempts.forEach((p) =>
+        p.then(resolve, (e) => {
+          firstError ??= e;
+          if (++failed === attempts.length) reject(firstError);
+        })
+      );
+    });
+  } catch (first) {
+    const msg =
+      first instanceof DOMException && first.name === "AbortError"
+        ? "Zeitüberschreitung"
+        : first instanceof Error
+          ? first.message
+          : "unbekannt";
+    throw new Error(`Kartendaten nicht erreichbar (${msg}). Bitte später erneut versuchen.`);
+  } finally {
+    clearTimeout(timer);
   }
-  throw new Error(
-    `Kartendaten nicht erreichbar (${lastError || "unbekannt"}). Bitte später erneut versuchen.`
-  );
+}
+
+const STREET_CACHE = "laufliste-streets-v1";
+
+function readCache(city: string): string[] | null {
+  try {
+    const all = JSON.parse(localStorage.getItem(STREET_CACHE) ?? "{}");
+    return all[city.toLowerCase()] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(city: string, streets: string[]) {
+  try {
+    const all = JSON.parse(localStorage.getItem(STREET_CACHE) ?? "{}");
+    all[city.toLowerCase()] = streets;
+    localStorage.setItem(STREET_CACHE, JSON.stringify(all));
+  } catch {
+    /* Cache ist optional */
+  }
 }
 
 async function nominatim(query: string, limit: number): Promise<NominatimResult[]> {
@@ -130,6 +162,9 @@ export async function fetchCityStreets(city: string): Promise<string[]> {
   let reached = false;
   let lastError: unknown = null;
 
+  const cached = readCache(city.trim());
+  if (cached?.length) return cached;
+
   for (const clause of areaClauses(city.trim())) {
     try {
       const data = await overpass(
@@ -143,7 +178,9 @@ export async function fetchCityStreets(city: string): Promise<string[]> {
         if (name) names.add(name);
       }
       if (names.size > 0) {
-        return [...names].sort((a, b) => a.localeCompare(b, "de"));
+        const sorted = [...names].sort((a, b) => a.localeCompare(b, "de"));
+        writeCache(city.trim(), sorted);
+        return sorted;
       }
     } catch (err) {
       lastError = err;
