@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PhoneOff, Phone } from "lucide-react";
 import toast from "react-hot-toast";
 import { LANGS, translate } from "@/lib/pitch";
-import { startAgent, type AgentSession } from "@/lib/voiceAgent";
+import { startAgent, type AgentSession } from "@/lib/geminiLive";
 
 interface Line {
   id: string;

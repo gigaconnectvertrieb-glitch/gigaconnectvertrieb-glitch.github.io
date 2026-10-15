@@ -2,7 +2,7 @@ import { useStore } from "@/store/useStore";
 import type { Entry, Tour } from "@/lib/utils";
 
 const URL_BASE = "https://syjwagsgxwfiacbfkoyp.supabase.co/rest/v1";
-const KEY =
+export const KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5andhZ3NneHdmaWFjYmZrb3lwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODk2MDEsImV4cCI6MjEwNzU2NTYwMX0.Xfb_qgUfoUMUYV9DbotVNOKrFxorQ8Y8UOJHjgSVNZ8";
 
 const META = "laufliste-sync-v1";
