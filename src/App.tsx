@@ -1,24 +1,20 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import Dashboard from "@/pages/Dashboard";
-import Gebiete from "@/pages/Gebiete";
-import GebietDetail from "@/pages/GebietDetail";
-import Tagesbericht from "@/pages/Tagesbericht";
-import Settings from "@/pages/Settings";
+import Home from "@/pages/Home";
+import Tour from "@/pages/Tour";
+import Report from "@/pages/Report";
+import More from "@/pages/More";
 
-function App() {
+export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="gebiete" element={<Gebiete />} />
-        <Route path="gebiete/:id" element={<GebietDetail />} />
-        <Route path="tagesbericht" element={<Tagesbericht />} />
-        <Route path="einstellungen" element={<Settings />} />
+      <Route element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="liste/:id" element={<Tour />} />
+        <Route path="bericht" element={<Report />} />
+        <Route path="mehr" element={<More />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );
 }
-
-export default App;

@@ -4,15 +4,18 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
 export default defineConfig({
+  build: {
+    rollupOptions: { input: path.resolve(__dirname, "app.html") },
+  },
   plugins: [
     react(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
       manifest: {
-        name: "E1 Gebietstracker",
-        short_name: "E1 Tracker",
-        description: "Gebietstracker für Strom & Gas - E1 Direktvertrieb",
+        name: "Laufliste",
+        short_name: "Laufliste",
+        description: "Laufliste für den Außendienst - Straße für Straße abarbeiten",
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",
@@ -37,19 +40,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,json}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/maps\.googleapis\.com\/.*/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "google-maps",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24,
-              },
-            },
-          },
-        ],
       },
     }),
   ],
