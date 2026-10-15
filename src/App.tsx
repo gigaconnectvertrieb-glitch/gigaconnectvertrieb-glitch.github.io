@@ -4,6 +4,7 @@ import Home from "@/pages/Home";
 import Tour from "@/pages/Tour";
 import Report from "@/pages/Report";
 import More from "@/pages/More";
+import Pitch from "@/pages/Pitch";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="liste/:id" element={<Tour />} />
         <Route path="bericht" element={<Report />} />
+        <Route path="pitch" element={<Pitch />} />
         <Route path="mehr" element={<More />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

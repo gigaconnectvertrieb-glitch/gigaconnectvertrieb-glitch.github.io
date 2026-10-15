@@ -1,9 +1,10 @@
 ﻿import { Outlet, NavLink } from "react-router-dom";
-import { ListChecks, BarChart3, Settings2 } from "lucide-react";
+import { ListChecks, BarChart3, Settings2, Languages } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Lauflisten", icon: ListChecks, end: true },
+  { to: "/pitch", label: "Pitch", icon: Languages, end: false },
   { to: "/bericht", label: "Bericht", icon: BarChart3, end: false },
   { to: "/mehr", label: "Mehr", icon: Settings2, end: false },
 ];
@@ -15,7 +16,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <nav className="shrink-0 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-3xl grid-cols-3 px-2 py-1">
+        <div className="mx-auto grid max-w-3xl grid-cols-4 px-2 py-1">
           {items.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
