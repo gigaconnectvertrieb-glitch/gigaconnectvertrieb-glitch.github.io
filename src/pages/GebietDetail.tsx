@@ -1,17 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useGebiete } from "@/hooks/useGebiete";
 import { useAddresses, useUpdateAddressStatus, useCreateAddresses } from "@/hooks/useAddresses";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import StreetGroup from "@/components/StreetGroup";
 import MapView from "@/components/MapView";
-import { ArrowLeft, Map, List, Plus, Search, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, Map, List, Loader2, X } from "lucide-react";
 import { Address } from "@/hooks/useAddresses";
 import { StatusType } from "@/lib/utils";
-import { getGoogleMapsLoader } from "@/utils/googleMaps";
+import { searchStreets, fetchStreetAddresses } from "@/utils/overpass";
 import toast from "react-hot-toast";
 
 export default function GebietDetail() {
@@ -20,13 +19,9 @@ export default function GebietDetail() {
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "map">("list");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
-  const [cityInput, setCityInput] = useState("");
-  const [streetInput, setStreetInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [startNum, setStartNum] = useState("");
-  const [endNum, setEndNum] = useState("");
-  const [useManual, setUseManual] = useState(false);
+  const [streetSearch, setStreetSearch] = useState("");
+  const [suggestions, setSuggestions] = useState<Array<{ street: string; city: string }>>([]);
+  const [loadingStreet, setLoadingStreet] = useState<string | null>(null);
 
   const { data: gebiete = [] } = useGebiete();
   const gebiet = gebiete.find((g) => g.id === id);
@@ -35,149 +30,54 @@ export default function GebietDetail() {
   const updateStatus = useUpdateAddressStatus();
   const createAddresses = useCreateAddresses();
 
+  const city = gebiet?.city || "";
+
+  useEffect(() => {
+    if (!city || streetSearch.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await searchStreets(city, streetSearch);
+        setSuggestions(res);
+      } catch {
+        setSuggestions([]);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [streetSearch, city]);
+
   const handleStatusChange = (addressId: string, status: StatusType) => {
     updateStatus.mutate({ id: addressId, status, visitedBy: "Orhan & Uwe" });
   };
 
-  const handleAddStreet = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id || !streetInput) return;
-
-    if (useManual) {
-      const start = parseInt(startNum);
-      const end = parseInt(endNum);
-      if (isNaN(start) || isNaN(end) || start > end) {
-        toast.error("Ungültige Hausnummern");
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const loader = getGoogleMapsLoader();
-        await loader.load();
-
-        const geocoder = new google.maps.Geocoder();
-        const newAddresses: Omit<Address, "id" | "created_at" | "updated_at" | "status" | "visited_by" | "visited_at" | "notes">[] = [];
-        const city = cityInput || gebiet?.city;
-
-        for (let num = start; num <= end; num++) {
-          const addressQuery = `${streetInput} ${num}, ${city}`;
-          const result = await geocoder.geocode({ address: addressQuery });
-          newAddresses.push({
-            gebiet_id: id,
-            street_name: streetInput,
-            house_number: num.toString(),
-            lat: result.results[0]?.geometry.location.lat() || null,
-            lng: result.results[0]?.geometry.location.lng() || null,
-          });
-          await new Promise((resolve) => setTimeout(resolve, 120));
-        }
-
-        createAddresses.mutate(newAddresses);
-        setIsAdding(false);
-        setStreetInput("");
-        setStartNum("");
-        setEndNum("");
-        setUseManual(false);
-        toast.success(`${newAddresses.length} Adressen hinzugefügt`);
-      } catch (error) {
-        toast.error("Fehler beim Laden");
-        console.error(error);
-      }
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
+  const handleLoadStreet = async (street: string) => {
+    if (!id) return;
+    setLoadingStreet(street);
     try {
-      const loader = getGoogleMapsLoader();
-      await loader.load();
-
-      const geocoder = new google.maps.Geocoder();
-      const city = cityInput || gebiet?.city;
-      const request: google.maps.GeocoderRequest = {
-        address: `${streetInput}, ${city}`,
-        componentRestrictions: city ? { country: "DE" } : undefined,
-      };
-
-      const result = await geocoder.geocode(request);
-      if (result.results.length === 0) {
-        toast.error("Straße nicht gefunden");
-        setLoading(false);
+      const found = await fetchStreetAddresses(street, city);
+      if (found.length === 0) {
+        toast.error("Keine Hausnummern gefunden");
+        setLoadingStreet(null);
         return;
       }
-
-      const location = result.results[0].geometry.location;
-      const bounds = result.results[0].geometry.viewport;
-
-      const streetBounds = bounds || new google.maps.LatLngBounds(
-        new google.maps.LatLng(location.lat() - 0.01, location.lng() - 0.01),
-        new google.maps.LatLng(location.lat() + 0.01, location.lng() + 0.01)
+      await createAddresses.mutateAsync(
+        found.map((a) => ({
+          gebiet_id: id,
+          street_name: a.street,
+          house_number: a.houseNumber,
+          lat: a.lat,
+          lng: a.lng,
+        }))
       );
-
-      geocoder.geocode({ bounds: streetBounds }, async (results, status) => {
-        if (status === google.maps.GeocoderStatus.OK) {
-          const houseNumbers = new Set<string>();
-          const addressList: Array<{ num: string, lat: number, lng: number }> = [];
-
-          results.forEach((res) => {
-            const addr = res.address_components;
-            let hasStreet = false;
-            let num = "";
-            addr.forEach((c) => {
-              if (c.types.includes("route") && c.long_name.toLowerCase().includes(streetInput.toLowerCase())) {
-                hasStreet = true;
-              }
-              if (c.types.includes("street_number")) {
-                num = c.long_name;
-              }
-            });
-            if (hasStreet && num && !houseNumbers.has(num)) {
-              houseNumbers.add(num);
-              addressList.push({
-                num,
-                lat: res.geometry.location.lat(),
-                lng: res.geometry.location.lng(),
-              });
-            }
-          });
-
-          if (addressList.length === 0) {
-            toast.error("Keine Hausnummern gefunden. Verwende 'Manuell (Von/Bis)'.");
-            setUseManual(true);
-            setLoading(false);
-            return;
-          }
-
-          addressList.sort((a, b) => {
-            const na = parseInt(a.num.replace(/\D/g, "")) || 0;
-            const nb = parseInt(b.num.replace(/\D/g, "")) || 0;
-            return na - nb;
-          });
-
-          const newAddrs = addressList.map((a) => ({
-            gebiet_id: id,
-            street_name: streetInput,
-            house_number: a.num,
-            lat: a.lat,
-            lng: a.lng,
-          }));
-
-          createAddresses.mutate(newAddrs);
-          setIsAdding(false);
-          setStreetInput("");
-          toast.success(`${newAddrs.length} Hausnummern automatisch gefunden`);
-        } else {
-          toast.error("Fehler beim Abrufen der Hausnummern");
-          setUseManual(true);
-        }
-        setLoading(false);
-      });
-    } catch (error) {
+      toast.success(`${found.length} Hausnummern geladen`);
+      setStreetSearch("");
+      setSuggestions([]);
+    } catch {
       toast.error("Fehler beim Laden");
-      console.error(error);
-      setLoading(false);
     }
+    setLoadingStreet(null);
   };
 
   const groupedAddresses = useMemo(() => {
@@ -187,27 +87,33 @@ export default function GebietDetail() {
         : a.street_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           a.house_number.includes(searchTerm)
     );
-
     const groups: Record<string, Address[]> = {};
     filtered.forEach((addr) => {
-      if (!groups[addr.street_name]) {
-        groups[addr.street_name] = [];
-      }
+      if (!groups[addr.street_name]) groups[addr.street_name] = [];
       groups[addr.street_name].push(addr);
     });
-
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "de"));
   }, [addresses, searchTerm]);
+
+  const stats = useMemo(() => {
+    const total = addresses.length;
+    const visited = addresses.filter((a) => a.status !== "unvisited").length;
+    const abschluss = addresses.filter((a) => a.status === "abschluss").length;
+    return {
+      total,
+      visited,
+      abschluss,
+      progress: total > 0 ? Math.round((visited / total) * 100) : 0,
+    };
+  }, [addresses]);
 
   if (!gebiet) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Gebiet nicht gefunden
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-900">Gebiet nicht gefunden</h2>
           <Button onClick={() => navigate("/gebiete")} className="mt-4">
-            Zurück zu Gebieten
+            Zurück
           </Button>
         </div>
       </div>
@@ -215,136 +121,122 @@ export default function GebietDetail() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 bg-white p-3 md:p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/gebiete")}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden md:inline">Zurück</span>
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-base font-bold text-slate-900 md:text-xl">
-              {gebiet.name}
-            </h1>
-            <p className="text-xs text-slate-600 md:text-sm">{gebiet.city}</p>
+    <div className="flex h-full flex-col bg-slate-50">
+      <div className="border-b border-slate-200 bg-white">
+        <div className="flex items-center gap-2 px-4 py-2">
+          <button
+            onClick={() => navigate("/gebiete")}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="truncate text-sm font-semibold text-slate-900">{gebiet.name}</h1>
+            <p className="text-xs text-slate-500">{city}</p>
           </div>
-          <div className="flex gap-1.5 md:gap-2">
-            <Button
-              variant={view === "list" ? "default" : "outline"}
-              size="sm"
+          <div className="flex rounded-lg bg-slate-100 p-0.5">
+            <button
               onClick={() => setView("list")}
+              className={`flex h-8 w-8 items-center justify-center rounded-md ${
+                view === "list" ? "bg-white shadow-sm" : ""
+              }`}
             >
               <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={view === "map" ? "default" : "outline"}
-              size="sm"
+            </button>
+            <button
               onClick={() => setView("map")}
+              className={`flex h-8 w-8 items-center justify-center rounded-md ${
+                view === "map" ? "bg-white shadow-sm" : ""
+              }`}
             >
               <Map className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setIsAdding(!isAdding)}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden md:inline">Straße hinzufügen</span>
-            </Button>
+            </button>
           </div>
         </div>
 
-        {isAdding && (
-          <Card className="mb-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm md:text-base">
-                Straße hinzufügen
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddStreet} className="flex flex-col gap-2">
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <Input
-                    placeholder="Stadt (optional)"
-                    value={cityInput}
-                    onChange={(e) => setCityInput(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Straßenname (z. B. Hauptstraße)"
-                    value={streetInput}
-                    onChange={(e) => setStreetInput(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="manual"
-                    checked={useManual}
-                    onChange={(e) => setUseManual(e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  <label htmlFor="manual" className="text-sm text-slate-700">
-                    Manuell (Von/Bis Hausnummer)
-                  </label>
-                </div>
-                {useManual && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Von Nr."
-                      value={startNum}
-                      onChange={(e) => setStartNum(e.target.value)}
-                      required
-                    />
-                    <Input
-                      placeholder="Bis Nr."
-                      value={endNum}
-                      onChange={(e) => setEndNum(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
-                <Button type="submit" disabled={loading || createAddresses.isPending}>
-                  {loading || createAddresses.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {useManual ? "Lade..." : "Suche Hausnummern..."}
-                    </>
-                  ) : (
-                    useManual ? "Hinzufügen" : "Automatisch finden"
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        {stats.total > 0 && (
+          <div className="px-4 pb-2">
+            <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+              <span>{stats.visited}/{stats.total}</span>
+              <span>{stats.progress}%</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-blue-600"
+                style={{ width: `${stats.progress}%` }}
+              />
+            </div>
+          </div>
         )}
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <Input
-            placeholder="Straße oder Hausnummer suchen..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
+        <div className="px-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Straße suchen & laden..."
+              value={streetSearch}
+              onChange={(e) => setStreetSearch(e.target.value)}
+              className="h-9 pl-9"
+            />
+            {streetSearch && (
+              <button
+                onClick={() => {
+                  setStreetSearch("");
+                  setSuggestions([]);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <X className="h-4 w-4 text-slate-400" />
+              </button>
+            )}
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.street}-${s.city}`}
+                    onClick={() => handleLoadStreet(s.street)}
+                    className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-slate-50"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{s.street}</p>
+                      <p className="text-xs text-slate-500">{s.city}</p>
+                    </div>
+                    {loadingStreet === s.street ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <div className="text-xs text-blue-600">Laden</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="px-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Filter Straße/Hausnummer..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-9 pl-9"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-2 md:p-4">
+      <div className="flex-1 overflow-auto p-2">
         {view === "list" ? (
-          addresses.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8 md:py-12">
-                <p className="text-sm text-slate-500 md:text-base">
-                  Noch keine Adressen hinzugefügt
-                </p>
-                <Button onClick={() => setIsAdding(true)} className="mt-4">
-                  <Plus className="h-4 w-4" />
-                  Erste Straße hinzufügen
-                </Button>
-              </CardContent>
-            </Card>
+          groupedAddresses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-sm text-slate-500">Keine Adressen geladen</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Suche oben eine Straße und klicke zum Laden
+              </p>
+            </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {groupedAddresses.map(([street, streetAddresses]) => (
                 <StreetGroup
                   key={street}
@@ -356,11 +248,9 @@ export default function GebietDetail() {
             </div>
           )
         ) : (
-          <Card className="h-full overflow-hidden">
-            <CardContent className="h-full p-0">
-              <MapView addresses={addresses} />
-            </CardContent>
-          </Card>
+          <div className="h-full overflow-hidden rounded-lg">
+            <MapView addresses={addresses} />
+          </div>
         )}
       </div>
     </div>
