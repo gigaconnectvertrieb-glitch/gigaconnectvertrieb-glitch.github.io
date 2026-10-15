@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Trash2, Footprints } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { useStore } from "@/store/useStore";
 
@@ -19,10 +19,9 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white">
-          <Footprints className="h-6 w-6" />
-        </div>
+        <img src="/emblem.png" alt="E1" className="h-12 w-auto" />
         <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">E1 Direktvertrieb®</p>
           <h1 className="text-2xl font-extrabold text-slate-900">Laufliste</h1>
           <p className="text-sm text-slate-500">Außendienst · Tür für Tür abarbeiten</p>
         </div>

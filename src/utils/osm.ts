@@ -23,6 +23,9 @@ interface NominatimAddress {
 
 interface NominatimResult {
   address?: NominatimAddress;
+  osm_type?: string;
+  osm_id?: number;
+  class?: string;
 }
 
 interface OverpassElement {
@@ -49,9 +52,48 @@ const HIGHWAYS =
 const escapeQuotes = (v: string) => v.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 const escapeRegex = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const AREA_CACHE = "laufliste-area-v1";
+const HOUSE_CACHE = "laufliste-houses-v1";
+
+function readJson<T>(key: string): Record<string, T> {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeJson(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* Cache ist optional */
+  }
+}
+
+/** Overpass-Gebiets-ID der Stadt (Relation + 3600000000). Mit ID ist die Abfrage viel schneller als über den Namen. */
+async function resolveAreaId(city: string): Promise<number | null> {
+  const key = city.toLowerCase();
+  const cache = readJson<number>(AREA_CACHE);
+  if (cache[key]) return cache[key];
+  try {
+    const data = await nominatim(city, 5);
+    const hit = data.find((r) => r.osm_type === "relation" && r.class === "boundary" && r.osm_id);
+    if (!hit?.osm_id) return null;
+    const id = 3600000000 + hit.osm_id;
+    cache[key] = id;
+    writeJson(AREA_CACHE, cache);
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 /** Alle Gebiets-Varianten, mit denen eine Stadt in OSM gefunden werden kann. */
-function areaClauses(city: string): string[] {
+async function areaClauses(city: string): Promise<string[]> {
+  const id = await resolveAreaId(city);
   return [
+    ...(id ? [`area(id:${id})->.a;`] : []),
     `area["name"="${escapeQuotes(city)}"]["boundary"="administrative"]->.a;`,
     `area["name"~"^${escapeQuotes(escapeRegex(city))}$",i]["boundary"="administrative"]->.a;`,
   ];
@@ -163,7 +205,7 @@ export async function fetchCityStreets(city: string): Promise<string[]> {
   const cached = readCache(city.trim());
   if (cached?.length) return cached;
 
-  for (const clause of areaClauses(city.trim())) {
+  for (const clause of await areaClauses(city.trim())) {
     try {
       const data = await overpass(
         `[out:json][timeout:60];${clause}` +
@@ -223,14 +265,30 @@ export async function fetchHouseNumbers(
   const chunkSize = 80;
   let done = 0;
 
-  for (let i = 0; i < streets.length; i += chunkSize) {
-    const chunk = streets.slice(i, i + chunkSize);
+  const houseCache = readJson<FoundAddress[]>(HOUSE_CACHE);
+  const cityKey = city.trim().toLowerCase();
+  const todo: string[] = [];
+  for (const street of streets) {
+    const hit = houseCache[`${cityKey}|${street}`];
+    if (hit?.length) {
+      for (const a of hit) result.set(`${a.street.toLowerCase()}|${a.number.toLowerCase()}`, a);
+    } else {
+      todo.push(street);
+    }
+  }
+  done = streets.length - todo.length;
+  onProgress?.(done, streets.length);
+
+  const clauses = todo.length > 0 ? await areaClauses(city.trim()) : [];
+
+  for (let i = 0; i < todo.length; i += chunkSize) {
+    const chunk = todo.slice(i, i + chunkSize);
     const alternatives = chunk.map((s) => escapeQuotes(escapeRegex(s))).join("|");
     let reached = false;
     let lastError: unknown = null;
     let gotElements = false;
 
-    for (const clause of areaClauses(city.trim())) {
+    for (const clause of clauses) {
       try {
         const data = await overpass(
           `[out:json][timeout:60];${clause}` +
@@ -258,6 +316,14 @@ export async function fetchHouseNumbers(
     }
 
     if (!reached && lastError) throw lastError;
+
+    if (gotElements) {
+      for (const street of chunk) {
+        const found = [...result.values()].filter((a) => a.street === street);
+        if (found.length) houseCache[`${cityKey}|${street}`] = found;
+      }
+      writeJson(HOUSE_CACHE, houseCache);
+    }
     done += chunk.length;
     onProgress?.(done, streets.length);
   }

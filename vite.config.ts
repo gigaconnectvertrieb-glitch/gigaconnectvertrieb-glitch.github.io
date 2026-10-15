@@ -11,13 +11,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
+      includeAssets: ["favicon.png", "emblem.png", "robots.txt", "apple-touch-icon.png"],
       manifest: {
-        name: "Laufliste",
-        short_name: "Laufliste",
+        name: "E1 Laufliste",
+        short_name: "E1 Laufliste",
         description: "Laufliste für den Außendienst - Straße für Straße abarbeiten",
-        theme_color: "#0f172a",
-        background_color: "#0f172a",
+        theme_color: "#0b0d12",
+        background_color: "#0b0d12",
         display: "standalone",
         icons: [
           {

@@ -26,4 +26,18 @@ textarea {
 
 body {
   overscroll-behavior-y: none;
+  background-color: #0b0d12;
+  color: #f4f1e8;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+h1,
+h2 {
+  font-family: "Libre Baskerville", "Times New Roman", ui-serif, serif;
+  letter-spacing: -0.01em;
+}
+
+input::placeholder {
+  color: #7d8696;
 }
