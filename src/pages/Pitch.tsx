@@ -9,7 +9,7 @@ interface Msg {
   foreign: string;
 }
 
-export default function Pitch() {
+export default function Pitch(_: { embedded?: boolean }) {
   const [langCode, setLangCode] = useState(localStorage.getItem("pitch-lang") ?? "tr");
   const lang = LANGS.find((l) => l.code === langCode) ?? LANGS[0];
   const [log, setLog] = useState<Msg[]>([]);
@@ -72,10 +72,9 @@ export default function Pitch() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Pitch-Dolmetscher</h1>
           <p className="text-sm text-slate-500">Du sprichst Deutsch, der Kunde hört seine Sprache.</p>
         </div>
         <select

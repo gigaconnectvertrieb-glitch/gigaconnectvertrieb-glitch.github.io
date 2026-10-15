@@ -4,7 +4,7 @@ import Home from "@/pages/Home";
 import Tour from "@/pages/Tour";
 import Report from "@/pages/Report";
 import More from "@/pages/More";
-import Pitch from "@/pages/Pitch";
+import Pitch from "@/pages/PitchHub";
 
 export default function App() {
   return (
