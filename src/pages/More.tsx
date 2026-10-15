@@ -61,7 +61,7 @@ export default function More() {
       <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="font-bold text-slate-900">Sicherung</h2>
         <p className="mt-1 text-xs text-slate-500">
-          {tours.length} Lauflisten · {entries.length} Hausnummern. Über die Sicherung könnt ihr Listen zwischen Geräten übertragen.
+          {tours.length} Lauflisten · {entries.length} Hausnummern. Zum Zusammenführen: Export auf dem einen Gerät, Import auf dem anderen. Danach zählt der Bericht beide Personen.
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button

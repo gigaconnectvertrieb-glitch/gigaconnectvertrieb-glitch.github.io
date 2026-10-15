@@ -8,24 +8,29 @@ import {
   csvCell,
   downloadFile,
   isSameDay,
+  PEOPLE,
 } from "@/lib/utils";
 
 export default function Report() {
   const { tours, entries } = useStore();
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [who, setWho] = useState("");
+  const ownerOf = (tourId: string) => tours.find((t) => t.id === tourId)?.owner || "–";
 
   const day = useMemo(() => {
     const [y, m, d] = date.split("-").map(Number);
     return new Date(y, (m || 1) - 1, d || 1);
   }, [date]);
 
-  const dayEntries = useMemo(
+  const dayAll = useMemo(
     () =>
       entries
         .filter((e) => isSameDay(e.visitedAt, day))
         .sort((a, b) => (b.visitedAt ?? "").localeCompare(a.visitedAt ?? "")),
     [entries, day]
   );
+  const dayEntries = who ? dayAll.filter((e) => ownerOf(e.tourId) === who) : dayAll;
+  const people = Array.from(new Set([...PEOPLE, ...tours.map((t) => t.owner || "–")]));
 
   const count = (s: string) => dayEntries.filter((e) => e.status === s).length;
   const deals = count("abschluss");
@@ -71,6 +76,32 @@ export default function Report() {
         />
       </div>
 
+      <div className="mt-4 flex gap-2 overflow-x-auto">
+        {["", ...people].map((p) => (
+          <button
+            key={p || "alle"}
+            type="button"
+            onClick={() => setWho(p)}
+            className={`h-9 shrink-0 rounded-full px-4 text-sm font-semibold ${
+              who === p ? "bg-blue-600 text-white" : "bg-white text-slate-700 shadow-sm"
+            }`}
+          >
+            {p || "Alle"}
+            {" "}
+            <span className="opacity-70">
+              {p ? dayAll.filter((e) => ownerOf(e.tourId) === p).length : dayAll.length}
+              {" · "}
+              {
+                (p ? dayAll.filter((e) => ownerOf(e.tourId) === p) : dayAll).filter(
+                  (e) => e.status === "abschluss"
+                ).length
+              }
+              ✓
+            </span>
+          </button>
+        ))}
+      </div>
+
       <div className="mt-4 grid grid-cols-2 gap-3">
         {cards.map((c) => (
           <div key={c.label} className="rounded-2xl bg-white p-4 shadow-sm">
@@ -109,7 +140,7 @@ export default function Report() {
                   {e.street} {e.number}
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  {cityOf(e.tourId)} · {STATUS_LABELS[e.status]}
+                  {cityOf(e.tourId)} · {ownerOf(e.tourId)} · {STATUS_LABELS[e.status]}
                   {e.note ? ` · ${e.note}` : ""}
                 </p>
               </div>

@@ -11,7 +11,10 @@ export interface Tour {
   id: string;
   city: string;
   createdAt: string;
+  owner?: string;
 }
+
+export const PEOPLE = ["Orhan", "Luca"];
 
 export interface Entry {
   id: string;

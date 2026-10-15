@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, Trash2 } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { useStore } from "@/store/useStore";
+import { PEOPLE } from "@/lib/utils";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { tours, entries, createTour, deleteTour } = useStore();
+  const { tours: allTours, entries, createTour, deleteTour, me, setMe } = useStore();
+  const tours = allTours.filter((t) => !t.owner || t.owner === me);
   const [city, setCity] = useState("");
 
   const start = (name: string) => {
@@ -16,6 +18,30 @@ export default function Home() {
     navigate(`/liste/${id}`);
   };
 
+  if (!me) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pt-[max(3rem,env(safe-area-inset-top))]">
+        <img src="/emblem.png" alt="E1" className="h-14 w-auto" />
+        <h1 className="mt-4 text-2xl font-extrabold text-slate-900">Wer bist du?</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Jeder sieht nur seine eigenen Lauflisten. Der Bericht zählt alle zusammen.
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          {PEOPLE.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setMe(p)}
+              className="h-14 rounded-2xl bg-blue-600 text-lg font-bold text-white active:bg-blue-700"
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex items-center gap-3">
@@ -23,7 +49,12 @@ export default function Home() {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">E1 Direktvertrieb®</p>
           <h1 className="text-2xl font-extrabold text-slate-900">Laufliste</h1>
-          <p className="text-sm text-slate-500">Außendienst · Tür für Tür abarbeiten</p>
+          <p className="text-sm text-slate-500">
+            Angemeldet als <b className="text-slate-900">{me}</b> ·{" "}
+            <button type="button" onClick={() => setMe("")} className="text-blue-600 underline">
+              wechseln
+            </button>
+          </p>
         </div>
       </div>
 

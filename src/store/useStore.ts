@@ -12,6 +12,8 @@ export interface NewEntry {
 interface State {
   tours: Tour[];
   entries: Entry[];
+  me: string;
+  setMe: (name: string) => void;
   createTour: (city: string) => string;
   deleteTour: (id: string) => void;
   addEntries: (tourId: string, items: NewEntry[]) => number;
@@ -31,17 +33,24 @@ export const useStore = create<State>()(
     (set, get) => ({
       tours: [],
       entries: [],
+      me: "",
+
+      setMe: (name) => set({ me: name }),
 
       createTour: (city) => {
         const name = city.trim();
+        const me = get().me;
         const existing = get().tours.find(
-          (t) => t.city.toLowerCase() === name.toLowerCase()
+          (t) =>
+            t.city.toLowerCase() === name.toLowerCase() &&
+            (!t.owner || t.owner === me)
         );
         if (existing) return existing.id;
         const tour: Tour = {
           id: newId(),
           city: name,
           createdAt: new Date().toISOString(),
+          owner: me,
         };
         set((s) => ({ tours: [tour, ...s.tours] }));
         return tour.id;
@@ -120,10 +129,14 @@ export const useStore = create<State>()(
         const { tours, entries } = data;
         set((s) => {
           const tourIds = new Set(s.tours.map((t) => t.id));
-          const entryIds = new Set(s.entries.map((e) => e.id));
+          const byId = new Map(s.entries.map((e) => [e.id, e]));
+          const merged = s.entries.map((e) => {
+            const inc = entries.find((x) => x.id === e.id);
+            return inc && (inc.visitedAt ?? "") > (e.visitedAt ?? "") ? inc : e;
+          });
           return {
             tours: [...s.tours, ...tours.filter((t) => !tourIds.has(t.id))],
-            entries: [...s.entries, ...entries.filter((e) => !entryIds.has(e.id))],
+            entries: [...merged, ...entries.filter((e) => !byId.has(e.id))],
           };
         });
       },
