@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Search, RotateCcw } from "lucide-react";
 import StreetSection from "@/components/StreetSection";
@@ -104,7 +104,7 @@ export default function Tour() {
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-3xl">
           <div className="flex items-center gap-2">
             <Link to="/" aria-label="Zurück" className="-ml-2 rounded-full p-2 active:bg-slate-100">
               <ArrowLeft className="h-5 w-5" />
@@ -167,7 +167,7 @@ export default function Tour() {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl flex-1 px-3 pb-28 pt-3">
+      <div className="mx-auto w-full max-w-3xl flex-1 px-3 pb-28 pt-3">
         {stats.total === 0 ? (
           <div className="mt-10 rounded-3xl bg-white p-6 text-center shadow-sm">
             <h2 className="font-bold text-slate-900">Noch keine Straßen in der Liste</h2>
@@ -211,7 +211,7 @@ export default function Tour() {
         <button
           type="button"
           onClick={() => setSheet(true)}
-          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 flex h-14 items-center gap-2 rounded-full bg-blue-600 px-5 font-bold text-white shadow-lg active:bg-blue-700"
+          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-[max(1rem,calc((100vw-48rem)/2+0.75rem))] flex h-14 items-center gap-2 rounded-full bg-blue-600 px-5 font-bold text-white shadow-lg active:bg-blue-700"
         >
           <Plus className="h-5 w-5" /> Straße
         </button>

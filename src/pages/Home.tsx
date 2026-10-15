@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, Trash2 } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
@@ -20,7 +20,7 @@ export default function Home() {
 
   if (!me) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pt-[max(3rem,env(safe-area-inset-top))]">
+      <div className="mx-auto max-w-3xl px-4 pt-[max(3rem,env(safe-area-inset-top))]">
         <img src="/emblem.png" alt="E1" className="h-14 w-auto" />
         <h1 className="mt-4 text-2xl font-extrabold text-slate-900">Wer bist du?</h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -43,7 +43,7 @@ export default function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="mx-auto max-w-3xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex items-center gap-3">
         <img src="/emblem.png" alt="E1" className="h-12 w-auto" />
         <div>

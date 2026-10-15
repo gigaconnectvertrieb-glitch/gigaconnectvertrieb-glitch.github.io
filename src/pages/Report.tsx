@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { format } from "date-fns";
 import { useStore } from "@/store/useStore";
@@ -62,7 +62,7 @@ export default function Report() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="mx-auto max-w-3xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Tagesbericht</h1>

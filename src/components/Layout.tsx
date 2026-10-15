@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router-dom";
+﻿import { Outlet, NavLink } from "react-router-dom";
 import { ListChecks, BarChart3, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,12 +10,12 @@ const items = [
 
 export default function Layout() {
   return (
-    <div className="flex h-full flex-col bg-slate-100">
+    <div className="flex h-[100dvh] flex-col bg-slate-100">
       <main className="min-h-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
       <nav className="shrink-0 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-2xl grid-cols-3 px-2 py-1">
+        <div className="mx-auto grid max-w-3xl grid-cols-3 px-2 py-1">
           {items.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}

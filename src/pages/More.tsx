@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Download, Upload, Trash2, Wifi, WifiOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -45,7 +45,7 @@ export default function More() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="mx-auto max-w-3xl px-4 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <h1 className="text-2xl font-extrabold text-slate-900">Mehr</h1>
 
       <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm">

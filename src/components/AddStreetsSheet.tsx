@@ -147,8 +147,8 @@ export default function AddStreetsSheet({ tourId, city, existingStreets, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-white">
-      <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
+    <div className="fixed left-0 top-0 z-40 flex h-[100dvh] w-full flex-col bg-white md:left-1/2 md:max-w-3xl md:-translate-x-1/2 md:border-x md:border-slate-200">
+      <div className="flex items-center gap-3 border-b border-slate-200 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="min-w-0 flex-1">
           <h2 className="font-bold text-slate-900">Straßen hinzufügen</h2>
           <p className="truncate text-xs text-slate-500">{city}</p>
