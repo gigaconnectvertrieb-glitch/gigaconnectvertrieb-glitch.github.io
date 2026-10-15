@@ -4,11 +4,15 @@ import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { useStore } from "@/store/useStore";
 import { downloadFile } from "@/lib/utils";
+import { onSyncState, type SyncState } from "@/lib/sync";
 
 export default function More() {
   const { tours, entries, importData, clearAll } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [online, setOnline] = useState(navigator.onLine);
+  const [sync, setSync] = useState<SyncState>("idle");
+
+  useEffect(() => onSyncState((s) => setSync(s)), []);
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -51,9 +55,12 @@ export default function More() {
           <WifiOff className="h-5 w-5 text-orange-500" />
         )}
         <div>
-          <p className="font-semibold text-slate-900">{online ? "Online" : "Offline"}</p>
+          <p className="font-semibold text-slate-900">
+            {online ? "Online" : "Offline"} · Sync{" "}
+            {sync === "ok" ? "aktuell" : sync === "syncing" ? "läuft…" : sync === "error" ? "Fehler (Tabellen angelegt?)" : "wartet"}
+          </p>
           <p className="text-xs text-slate-500">
-            Alle Listen liegen lokal auf diesem Gerät und funktionieren auch ohne Netz. Nur das Laden neuer Straßen braucht Internet.
+            Listen werden automatisch zwischen Orhan und Luca abgeglichen und liegen auch lokal, also funktioniert die App ohne Netz. Nur das Laden neuer Straßen braucht Internet.
           </p>
         </div>
       </div>

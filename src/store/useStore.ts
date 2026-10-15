@@ -9,7 +9,19 @@ export interface NewEntry {
   lng?: number | null;
 }
 
+export interface Tombstone {
+  kind: "tour" | "entry";
+  id: string;
+  tourId?: string;
+  at: string;
+}
+
+const now = () => new Date().toISOString();
+
 interface State {
+  tombstones: Tombstone[];
+  applyRemote: (tours: Tour[], entries: Entry[], deleted: Tombstone[]) => void;
+  clearTombstones: (ids: string[]) => void;
   tours: Tour[];
   entries: Entry[];
   me: string;
@@ -34,6 +46,7 @@ export const useStore = create<State>()(
       tours: [],
       entries: [],
       me: "",
+      tombstones: [],
 
       setMe: (name) => set({ me: name }),
 
@@ -50,6 +63,7 @@ export const useStore = create<State>()(
           id: newId(),
           city: name,
           createdAt: new Date().toISOString(),
+          updatedAt: now(),
           owner: me,
         };
         set((s) => ({ tours: [tour, ...s.tours] }));
@@ -58,6 +72,7 @@ export const useStore = create<State>()(
 
       deleteTour: (id) =>
         set((s) => ({
+          tombstones: [...s.tombstones, { kind: "tour", id, at: now() }],
           tours: s.tours.filter((t) => t.id !== id),
           entries: s.entries.filter((e) => e.tourId !== id),
         })),
@@ -83,6 +98,7 @@ export const useStore = create<State>()(
             status: "open",
             note: "",
             visitedAt: null,
+            updatedAt: now(),
           });
         }
         if (fresh.length) set((s) => ({ entries: [...s.entries, ...fresh] }));
@@ -97,6 +113,7 @@ export const useStore = create<State>()(
                   ...e,
                   status,
                   visitedAt: status === "open" ? null : new Date().toISOString(),
+                  updatedAt: now(),
                 }
               : e
           ),
@@ -104,11 +121,17 @@ export const useStore = create<State>()(
 
       setNote: (id, note) =>
         set((s) => ({
-          entries: s.entries.map((e) => (e.id === id ? { ...e, note } : e)),
+          entries: s.entries.map((e) => (e.id === id ? { ...e, note, updatedAt: now() } : e)),
         })),
 
       removeStreet: (tourId, street) =>
         set((s) => ({
+          tombstones: [
+            ...s.tombstones,
+            ...s.entries
+              .filter((e) => e.tourId === tourId && e.street === street)
+              .map((e) => ({ kind: "entry" as const, id: e.id, tourId, at: now() })),
+          ],
           entries: s.entries.filter(
             (e) => !(e.tourId === tourId && e.street === street)
           ),
@@ -117,7 +140,7 @@ export const useStore = create<State>()(
       resetTour: (tourId) =>
         set((s) => ({
           entries: s.entries.map((e) =>
-            e.tourId === tourId ? { ...e, status: "open", visitedAt: null } : e
+            e.tourId === tourId ? { ...e, status: "open", visitedAt: null, updatedAt: now() } : e
           ),
         })),
 
@@ -140,6 +163,32 @@ export const useStore = create<State>()(
           };
         });
       },
+
+      applyRemote: (rt, re, deleted) =>
+        set((s) => {
+          const gone = new Set(deleted.map((d) => d.id));
+          const dead = new Set(s.tombstones.map((d) => d.id));
+          const ts = (x: { updatedAt?: string }) => x.updatedAt ?? "";
+          const mergeList = <T extends { id: string; updatedAt?: string }>(
+            local: T[],
+            remote: T[]
+          ) => {
+            const map = new Map(local.map((x) => [x.id, x]));
+            for (const r of remote) {
+              if (dead.has(r.id)) continue;
+              const l = map.get(r.id);
+              if (!l || ts(r) > ts(l)) map.set(r.id, r);
+            }
+            return [...map.values()].filter((x) => !gone.has(x.id));
+          };
+          const tours = mergeList(s.tours, rt);
+          const ids = new Set(tours.map((t) => t.id));
+          const entries = mergeList(s.entries, re).filter((e) => ids.has(e.tourId));
+          return { tours, entries };
+        }),
+
+      clearTombstones: (ids) =>
+        set((s) => ({ tombstones: s.tombstones.filter((t) => !ids.includes(t.id)) })),
 
       clearAll: () => set({ tours: [], entries: [] }),
     }),

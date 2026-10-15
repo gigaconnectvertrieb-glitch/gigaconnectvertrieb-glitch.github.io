@@ -11,6 +11,9 @@ import "@fontsource/manrope/800.css";
 import "@fontsource/libre-baskerville/400.css";
 import "@fontsource/libre-baskerville/700.css";
 import "./index.css";
+import { startSync } from "./lib/sync";
+
+startSync();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

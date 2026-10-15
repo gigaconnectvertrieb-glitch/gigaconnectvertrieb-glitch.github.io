@@ -12,6 +12,7 @@ export interface Tour {
   city: string;
   createdAt: string;
   owner?: string;
+  updatedAt?: string;
 }
 
 export const PEOPLE = ["Orhan", "Luca"];
@@ -26,6 +27,7 @@ export interface Entry {
   status: Status;
   note: string;
   visitedAt: string | null;
+  updatedAt?: string;
 }
 
 export const STATUS_LABELS: Record<Status, string> = {
